@@ -19,7 +19,7 @@ function VagueBadge({ prompt }: { prompt: Prompt }) {
   }
 
   return (
-    <span className="tag-chip bg-yellow-100 text-yellow-900" title={detection.suggestion}>
+    <span className="badge" title={detection.suggestion}>
       À préciser
     </span>
   );
@@ -35,7 +35,7 @@ export function PromptCard({ prompt, onOpen, onCopy, onToggleFavorite, query }: 
           aria-label={`Ouvrir ${prompt.title}`}
           className="min-w-0 flex-1 text-left"
         >
-          <h3 className="text-base font-semibold leading-6 text-zinc-950">
+          <h3 className="text-base font-semibold leading-6 text-ink">
             <HighlightedText text={prompt.title} query={query} />
           </h3>
           <p className="prompt-excerpt mt-2">
@@ -50,10 +50,10 @@ export function PromptCard({ prompt, onOpen, onCopy, onToggleFavorite, query }: 
             {tag}
           </span>
         ))}
-        {prompt.model && <span className="text-xs font-medium text-zinc-600">{prompt.model}</span>}
+        {prompt.model && <span className="text-xs font-medium text-muted">{prompt.model}</span>}
       </div>
-      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-zinc-200 pt-3 text-sm text-zinc-600">
-        <span aria-label={`Note ${prompt.rating} sur 5`} className="font-semibold text-amber-700">
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-3 text-sm text-muted">
+        <span aria-label={`Note ${prompt.rating} sur 5`} className="font-semibold text-accent">
           ★ {prompt.rating}/5
         </span>
         <span aria-label={`${prompt.copyCount} copies`}>

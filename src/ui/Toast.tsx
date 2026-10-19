@@ -11,7 +11,7 @@ export function Toast({ message }: ToastProps) {
     <p
       role="status"
       aria-live="polite"
-      className="fixed bottom-6 right-6 z-20 rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+      className="fixed bottom-6 right-6 z-20 rounded-control border border-ink bg-ink px-4 py-3 text-sm font-semibold text-surface shadow-md"
     >
       {message}
     </p>

@@ -19,11 +19,7 @@ export function Settings({ onBack, onExport, onImport }: SettingsProps) {
         </button>
       </div>
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={onExport}
-          className="button-secondary border-indigo-200 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50"
-        >
+        <button type="button" onClick={onExport} className="button-secondary">
           Exporter la bibliothèque
         </button>
         <label className="button-secondary cursor-pointer text-left">
@@ -43,8 +39,8 @@ export function Settings({ onBack, onExport, onImport }: SettingsProps) {
           />
         </label>
       </div>
-      <div className="mt-8 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-600">
-        <h3 className="font-semibold text-zinc-950">À propos</h3>
+      <div className="mt-8 rounded-control border border-border bg-surface-2 p-4 text-sm leading-6 text-muted">
+        <h3 className="font-semibold text-ink">À propos</h3>
         <p className="mt-2">
           Prompt Diary garde vos prompts dans votre navigateur. Aucun compte ni serveur.
         </p>

@@ -22,15 +22,15 @@ export function PromptDetail({ prompt, onBack, onCopy, onToggleFavorite }: Promp
           Retour
         </button>
       </div>
-      <pre className="mt-8 whitespace-pre-wrap rounded-xl bg-zinc-950 p-5 text-sm leading-7 text-zinc-100">
+      <pre className="mt-8 whitespace-pre-wrap rounded-control bg-ink p-5 font-mono text-sm leading-7 text-surface">
         {prompt.body}
       </pre>
       {prompt.context && (
-        <p className="mt-5 text-sm leading-6 text-zinc-600">
-          <strong className="text-zinc-950">Contexte :</strong> {prompt.context}
+        <p className="mt-5 text-sm leading-6 text-muted">
+          <strong className="text-ink">Contexte :</strong> {prompt.context}
         </p>
       )}
-      <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-zinc-600">
+      <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-muted">
         <span>Note : {prompt.rating}/5</span>
         <span>
           {prompt.copyCount} copie{prompt.copyCount === 1 ? '' : 's'}

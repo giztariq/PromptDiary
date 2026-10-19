@@ -47,13 +47,14 @@ export function PromptSearch({
               aria-pressed={selected}
               aria-label={`Tag : ${tag}`}
               onClick={() => onToggleTag(tag)}
-              className="filter-chip"
+              className="filter-chip inline-flex items-center gap-1"
             >
               #{tag}
+              {selected && <span aria-hidden="true">×</span>}
             </button>
           );
         })}
-        <label className="ml-auto flex items-center gap-2 text-sm text-zinc-600">
+        <label className="ml-auto flex items-center gap-2 text-sm text-muted">
           <span>Note minimale</span>
           <select
             aria-label="Note minimale"

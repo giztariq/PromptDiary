@@ -18,6 +18,7 @@ import { PromptDetail } from './PromptDetail';
 import { PromptSearch } from './PromptSearch';
 import { Settings } from './Settings';
 import { Toast } from './Toast';
+import { LogoMark } from './LogoMark';
 
 interface AppProps {
   storage?: StorageAdapter;
@@ -125,30 +126,22 @@ function PromptLibrary({
       />
 
       {prompts.length === 0 ? (
-        <div className="state-card">
+        <div className="state-card empty-state">
           {hasPrompts ? (
             <>
               <h3 className="text-base font-semibold">Aucun résultat</h3>
-              <p className="mt-2 text-sm text-zinc-600">Modifiez votre recherche ou vos filtres.</p>
-              <button
-                type="button"
-                onClick={onClearFilters}
-                className="button-secondary mt-4 border-indigo-200 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50"
-              >
+              <p className="mt-2 text-sm text-muted">Modifiez votre recherche ou vos filtres.</p>
+              <button type="button" onClick={onClearFilters} className="button-secondary mt-4">
                 Réinitialiser les filtres
               </button>
             </>
           ) : (
             <>
               <h3 className="text-base font-semibold">Aucun prompt enregistré</h3>
-              <p className="mt-2 text-sm text-zinc-600">
+              <p className="mt-2 text-sm text-muted">
                 Créez votre premier prompt pour commencer votre bibliothèque locale.
               </p>
-              <button
-                type="button"
-                onClick={onCreate}
-                className="button-secondary mt-4 border-indigo-200 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50"
-              >
+              <button type="button" onClick={onCreate} className="button-secondary mt-4">
                 Créer un prompt
               </button>
             </>
@@ -227,7 +220,7 @@ function PromptEditor({
         noValidate
       >
         <div>
-          <label htmlFor="prompt-title" className="text-sm font-semibold text-zinc-800">
+          <label htmlFor="prompt-title" className="text-sm font-semibold text-ink">
             Titre
           </label>
           <input
@@ -239,14 +232,14 @@ function PromptEditor({
             className="form-input mt-2"
           />
           {errors.title && (
-            <p id="prompt-title-error" className="mt-1 text-sm text-red-700">
+            <p id="prompt-title-error" className="mt-1 text-sm text-danger">
               {errors.title}
             </p>
           )}
         </div>
 
         <div>
-          <label htmlFor="prompt-body" className="text-sm font-semibold text-zinc-800">
+          <label htmlFor="prompt-body" className="text-sm font-semibold text-ink">
             Corps du prompt
           </label>
           <textarea
@@ -259,7 +252,7 @@ function PromptEditor({
             className="form-textarea mt-2"
           />
           {errors.body && (
-            <p id="prompt-body-error" className="mt-1 text-sm text-red-700">
+            <p id="prompt-body-error" className="mt-1 text-sm text-danger">
               {errors.body}
             </p>
           )}
@@ -267,7 +260,7 @@ function PromptEditor({
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label htmlFor="prompt-tags" className="text-sm font-semibold text-zinc-800">
+            <label htmlFor="prompt-tags" className="text-sm font-semibold text-ink">
               Tags
             </label>
             <input
@@ -277,10 +270,10 @@ function PromptEditor({
               placeholder="analyse, synthèse"
               className="form-input mt-2"
             />
-            <p className="mt-1 text-xs text-zinc-600">Séparez les tags par des virgules.</p>
+            <p className="mt-1 text-xs text-muted">Séparez les tags par des virgules.</p>
           </div>
           <div>
-            <label htmlFor="prompt-model" className="text-sm font-semibold text-zinc-800">
+            <label htmlFor="prompt-model" className="text-sm font-semibold text-ink">
               Modèle
             </label>
             <input
@@ -294,7 +287,7 @@ function PromptEditor({
         </div>
 
         <div>
-          <label htmlFor="prompt-context" className="text-sm font-semibold text-zinc-800">
+          <label htmlFor="prompt-context" className="text-sm font-semibold text-ink">
             Contexte
           </label>
           <textarea
@@ -308,7 +301,7 @@ function PromptEditor({
         </div>
 
         <div>
-          <label htmlFor="prompt-rating" className="text-sm font-semibold text-zinc-800">
+          <label htmlFor="prompt-rating" className="text-sm font-semibold text-ink">
             Note
           </label>
           <select
@@ -327,36 +320,35 @@ function PromptEditor({
             ))}
           </select>
           {errors.rating && (
-            <p id="prompt-rating-error" className="mt-1 text-sm text-red-700">
+            <p id="prompt-rating-error" className="mt-1 text-sm text-danger">
               {errors.rating}
             </p>
           )}
         </div>
 
-        <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4" aria-live="polite">
+        <div
+          className="rounded-control border border-accent-soft bg-accent-soft p-4"
+          aria-live="polite"
+        >
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold text-zinc-950">Aperçu</span>
+            <span className="text-sm font-semibold text-ink">Aperçu</span>
             {detection.vague ? (
-              <span className="tag-chip bg-yellow-100 text-yellow-900">À préciser</span>
+              <span className="badge">À préciser</span>
             ) : (
-              <span className="text-sm font-medium text-green-700">Prompt suffisamment précis</span>
+              <span className="text-sm font-medium text-success">Prompt suffisamment précis</span>
             )}
           </div>
           {detection.vague && (
-            <p className="mt-2 text-sm text-yellow-900">{detection.suggestion}</p>
+            <p className="mt-2 text-sm text-accent-dark">{detection.suggestion}</p>
           )}
         </div>
 
         {saveError && (
-          <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+          <p role="alert" className="error-message p-3 text-sm">
             {saveError}
           </p>
         )}
-        <button
-          type="submit"
-          disabled={saving}
-          className="button-primary w-full disabled:opacity-60"
-        >
+        <button type="submit" disabled={saving} className="button-primary w-full">
           {saving ? 'Enregistrement…' : 'Enregistrer le prompt'}
         </button>
       </form>
@@ -556,12 +548,15 @@ export default function App({ storage = defaultStorage }: AppProps) {
   return (
     <main className="app-shell">
       <section className="page-shell">
-        <header>
-          <p className="eyebrow">Local-first prompt journal</p>
-          <h1 className="mt-3 text-[32px] font-semibold leading-10 tracking-tight sm:text-[32px]">
-            Prompt Diary
-          </h1>
-          <p className="mt-4 max-w-2xl text-base leading-6 text-zinc-600 sm:text-lg sm:leading-7">
+        <header className="hero rounded-card border border-border p-6 sm:p-8">
+          <div className="flex items-center gap-3">
+            <LogoMark />
+            <h1 className="font-display text-[32px] font-semibold leading-10 tracking-tight">
+              Prompt Diary
+            </h1>
+          </div>
+          <p className="eyebrow mt-6">Local-first prompt journal</p>
+          <p className="mt-3 max-w-2xl text-base leading-6 text-muted sm:text-lg sm:leading-7">
             Gardez vos prompts utiles, notez ce qui fonctionne et retrouvez-les en quelques
             secondes.
           </p>
@@ -586,7 +581,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
             <button
               type="button"
               onClick={() => setLoadAttempt((attempt) => attempt + 1)}
-              className="button-secondary mt-4 border-red-200 bg-white text-red-800 hover:border-red-300 hover:bg-red-50"
+              className="button-secondary mt-4"
             >
               Réessayer
             </button>
@@ -667,7 +662,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
           />
         )}
       </section>
-      <footer className="mx-auto max-w-[1024px] border-t border-zinc-200 px-6 pt-5 text-center text-sm text-zinc-600 sm:px-0">
+      <footer className="mx-auto max-w-[1024px] border-t border-border px-6 pt-5 text-center text-sm text-muted sm:px-0">
         Tout est local, rien ne part sur un serveur.
       </footer>
       <Toast message={toast} />
