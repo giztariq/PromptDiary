@@ -274,4 +274,30 @@ describe('Prompt Diary prompt library', () => {
     await expect(adapter.list()).resolves.toHaveLength(2);
     expect(screen.getByRole('heading', { name: 'Ajouté' })).toBeVisible();
   });
+
+  it('shows the local-only guarantee and a clear no-results state', async () => {
+    const user = userEvent.setup();
+    const prompt: Prompt = {
+      id: 'searchable',
+      title: 'Prompt searchable',
+      body: 'Un contenu existant.',
+      tags: [],
+      model: '',
+      context: '',
+      rating: 3,
+      favorite: false,
+      copyCount: 0,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+    };
+    render(<App storage={createMemoryAdapter([prompt])} />);
+
+    expect(await screen.findByText('Tout est local, rien ne part sur un serveur.')).toBeVisible();
+    await user.type(
+      screen.getByRole('searchbox', { name: 'Rechercher dans les prompts' }),
+      'inexistant',
+    );
+
+    expect(screen.getByText('Aucun résultat')).toBeVisible();
+  });
 });

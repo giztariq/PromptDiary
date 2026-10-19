@@ -64,6 +64,7 @@ function readFileText(file: File): Promise<string> {
 
 interface PromptLibraryProps {
   prompts: Prompt[];
+  hasPrompts: boolean;
   onCreate: () => void;
   onSettings: () => void;
   query: string;
@@ -76,10 +77,12 @@ interface PromptLibraryProps {
   onOpen: (prompt: Prompt) => void;
   onCopy: (prompt: Prompt) => void;
   onToggleFavorite: (prompt: Prompt) => void;
+  onClearFilters: () => void;
 }
 
 function PromptLibrary({
   prompts,
+  hasPrompts,
   onCreate,
   onSettings,
   query,
@@ -92,6 +95,7 @@ function PromptLibrary({
   onOpen,
   onCopy,
   onToggleFavorite,
+  onClearFilters,
 }: PromptLibraryProps) {
   return (
     <section aria-labelledby="library-heading" className="mt-10">
@@ -132,17 +136,35 @@ function PromptLibrary({
 
       {prompts.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-          <h3 className="text-lg font-semibold">Aucun prompt enregistré</h3>
-          <p className="mt-2 text-sm text-slate-600">
-            Créez votre premier prompt pour commencer votre bibliothèque locale.
-          </p>
-          <button
-            type="button"
-            onClick={onCreate}
-            className="mt-5 rounded-xl border border-indigo-200 px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
-          >
-            Créer un prompt
-          </button>
+          {hasPrompts ? (
+            <>
+              <h3 className="text-lg font-semibold">Aucun résultat</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Modifiez votre recherche ou vos filtres.
+              </p>
+              <button
+                type="button"
+                onClick={onClearFilters}
+                className="mt-5 rounded-xl border border-indigo-200 px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
+              >
+                Réinitialiser les filtres
+              </button>
+            </>
+          ) : (
+            <>
+              <h3 className="text-lg font-semibold">Aucun prompt enregistré</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Créez votre premier prompt pour commencer votre bibliothèque locale.
+              </p>
+              <button
+                type="button"
+                onClick={onCreate}
+                className="mt-5 rounded-xl border border-indigo-200 px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
+              >
+                Créer un prompt
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <div className="mt-6 grid gap-4" aria-label="Liste des prompts">
@@ -560,6 +582,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
         {status === 'ready' && view === 'library' && (
           <PromptLibrary
             prompts={visiblePrompts}
+            hasPrompts={prompts.length > 0}
             onCreate={openEditor}
             onSettings={openSettings}
             query={query}
@@ -581,6 +604,11 @@ export default function App({ storage = defaultStorage }: AppProps) {
             }}
             onCopy={(prompt) => void copyPrompt(prompt)}
             onToggleFavorite={(prompt) => void changeFavorite(prompt)}
+            onClearFilters={() => {
+              setQuery('');
+              setSelectedTags([]);
+              setMinRating(0);
+            }}
           />
         )}
         {status === 'ready' && view === 'settings' && (
@@ -611,6 +639,9 @@ export default function App({ storage = defaultStorage }: AppProps) {
           />
         )}
       </section>
+      <footer className="mx-auto mt-10 max-w-4xl border-t border-slate-200 pt-5 text-center text-sm text-slate-500">
+        Tout est local, rien ne part sur un serveur.
+      </footer>
       <Toast message={toast} />
     </main>
   );

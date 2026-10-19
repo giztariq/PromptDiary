@@ -43,6 +43,15 @@ npm run build
 npm start
 ```
 
+## Scénario de démo (2 minutes)
+
+1. Créer « Analyse de document » avec les tags `analyse` et une note `5`.
+2. Rechercher `analyse`, filtrer sur `5+`, copier le prompt et vérifier le toast.
+3. Vérifier que le compteur d'utilisation augmente, puis marquer le prompt comme favori.
+4. Exporter la bibliothèque en JSON depuis Réglages.
+5. Créer un prompt vague et vérifier le badge « À préciser » et sa suggestion.
+6. Vérifier le rappel : « Tout est local, rien ne part sur un serveur. »
+
 ## Docker
 
 ```bash
