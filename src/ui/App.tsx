@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { createPromptFromDraft } from '../domain/promptCreation';
+import { incrementCopyCount, toggleFavorite } from '../domain/promptActions';
+import { searchPrompts } from '../domain/search';
 import {
   validatePromptDraft,
   type PromptDraft,
@@ -10,6 +12,10 @@ import { detectVaguePrompt } from '../domain/vagueDetection';
 import type { Prompt } from '../domain/types';
 import { createIndexedDbAdapter } from '../storage/indexedDbAdapter';
 import type { StorageAdapter } from '../storage/storageAdapter';
+import { PromptCard } from './PromptCard';
+import { PromptDetail } from './PromptDetail';
+import { PromptSearch } from './PromptSearch';
+import { Toast } from './Toast';
 
 interface AppProps {
   storage?: StorageAdapter;
@@ -39,54 +45,35 @@ function createId(): string {
   return crypto.randomUUID();
 }
 
-function PromptBadge({ prompt }: { prompt: Pick<Prompt, 'body' | 'context'> }) {
-  const detection = detectVaguePrompt(prompt);
-
-  if (!detection.vague) {
-    return null;
-  }
-
-  return (
-    <span
-      className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900"
-      title={detection.suggestion}
-    >
-      À préciser
-    </span>
-  );
-}
-
-function PromptCard({ prompt }: { prompt: Prompt }) {
-  return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-950">{prompt.title}</h2>
-          <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">
-            {prompt.body}
-          </p>
-        </div>
-        <PromptBadge prompt={prompt} />
-      </div>
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-        {prompt.tags.map((tag) => (
-          <span key={tag} className="rounded-full bg-indigo-50 px-2.5 py-1 text-indigo-700">
-            {tag}
-          </span>
-        ))}
-        {prompt.model && <span>{prompt.model}</span>}
-        <span aria-label={`Note ${prompt.rating} sur 5`}>★ {prompt.rating}/5</span>
-      </div>
-    </article>
-  );
-}
-
 interface PromptLibraryProps {
   prompts: Prompt[];
   onCreate: () => void;
+  query: string;
+  onQueryChange: (query: string) => void;
+  tags: string[];
+  selectedTags: string[];
+  onToggleTag: (tag: string) => void;
+  minRating: number;
+  onMinRatingChange: (rating: number) => void;
+  onOpen: (prompt: Prompt) => void;
+  onCopy: (prompt: Prompt) => void;
+  onToggleFavorite: (prompt: Prompt) => void;
 }
 
-function PromptLibrary({ prompts, onCreate }: PromptLibraryProps) {
+function PromptLibrary({
+  prompts,
+  onCreate,
+  query,
+  onQueryChange,
+  tags,
+  selectedTags,
+  onToggleTag,
+  minRating,
+  onMinRatingChange,
+  onOpen,
+  onCopy,
+  onToggleFavorite,
+}: PromptLibraryProps) {
   return (
     <section aria-labelledby="library-heading" className="mt-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -107,6 +94,16 @@ function PromptLibrary({ prompts, onCreate }: PromptLibraryProps) {
         </button>
       </div>
 
+      <PromptSearch
+        query={query}
+        onQueryChange={onQueryChange}
+        tags={tags}
+        selectedTags={selectedTags}
+        onToggleTag={onToggleTag}
+        minRating={minRating}
+        onMinRatingChange={onMinRatingChange}
+      />
+
       {prompts.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
           <h3 className="text-lg font-semibold">Aucun prompt enregistré</h3>
@@ -124,7 +121,13 @@ function PromptLibrary({ prompts, onCreate }: PromptLibraryProps) {
       ) : (
         <div className="mt-6 grid gap-4" aria-label="Liste des prompts">
           {prompts.map((prompt) => (
-            <PromptCard key={prompt.id} prompt={prompt} />
+            <PromptCard
+              key={prompt.id}
+              prompt={prompt}
+              onOpen={() => onOpen(prompt)}
+              onCopy={() => onCopy(prompt)}
+              onToggleFavorite={() => onToggleFavorite(prompt)}
+            />
           ))}
         </div>
       )}
@@ -329,12 +332,30 @@ function PromptEditor({
 export default function App({ storage = defaultStorage }: AppProps) {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [status, setStatus] = useState<LibraryStatus>('loading');
-  const [view, setView] = useState<'library' | 'editor'>('library');
+  const [view, setView] = useState<'library' | 'editor' | 'detail'>('library');
+  const [selectedPromptId, setSelectedPromptId] = useState<string>();
+  const [query, setQuery] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [minRating, setMinRating] = useState(0);
+  const [toast, setToast] = useState('');
   const [draft, setDraft] = useState<PromptDraft>(emptyDraft);
   const [tagsValue, setTagsValue] = useState('');
   const [errors, setErrors] = useState<PromptDraftErrors>({});
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const tags = useMemo(
+    () =>
+      [...new Set(prompts.flatMap((prompt) => prompt.tags))].sort((left, right) =>
+        left.localeCompare(right),
+      ),
+    [prompts],
+  );
+  const visiblePrompts = useMemo(
+    () => searchPrompts(prompts, { query, tags: selectedTags, minRating: minRating || undefined }),
+    [minRating, prompts, query, selectedTags],
+  );
+  const selectedPrompt = prompts.find((prompt) => prompt.id === selectedPromptId);
 
   useEffect(() => {
     let active = true;
@@ -358,11 +379,30 @@ export default function App({ storage = defaultStorage }: AppProps) {
     };
   }, [storage]);
 
+  useEffect(() => {
+    function handleShortcut(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      const tagName = target?.tagName;
+      const isTyping = tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT';
+
+      if (event.key.toLowerCase() === 'n' && !event.metaKey && !event.ctrlKey && !isTyping) {
+        event.preventDefault();
+        if (status === 'ready') {
+          openEditor();
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleShortcut);
+    return () => window.removeEventListener('keydown', handleShortcut);
+  }, [status]);
+
   function openEditor() {
     setDraft(emptyDraft);
     setTagsValue('');
     setErrors({});
     setSaveError('');
+    setSelectedPromptId(undefined);
     setView('editor');
   }
 
@@ -399,6 +439,39 @@ export default function App({ storage = defaultStorage }: AppProps) {
     }
   }
 
+  async function copyPrompt(prompt: Prompt) {
+    try {
+      if (!navigator.clipboard) {
+        throw new Error('Clipboard unavailable');
+      }
+      await navigator.clipboard.writeText(prompt.body);
+      const updated = incrementCopyCount(prompt, new Date().toISOString());
+      await storage.save(updated);
+      setPrompts((currentPrompts) =>
+        currentPrompts.map((currentPrompt) =>
+          currentPrompt.id === updated.id ? updated : currentPrompt,
+        ),
+      );
+      setToast('Prompt copié');
+    } catch {
+      setToast('Impossible de copier le prompt.');
+    }
+  }
+
+  async function changeFavorite(prompt: Prompt) {
+    const updated = toggleFavorite(prompt, new Date().toISOString());
+    try {
+      await storage.save(updated);
+      setPrompts((currentPrompts) =>
+        currentPrompts.map((currentPrompt) =>
+          currentPrompt.id === updated.id ? updated : currentPrompt,
+        ),
+      );
+    } catch {
+      setToast('Impossible de modifier le favori.');
+    }
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900 sm:py-14">
       <section className="mx-auto max-w-4xl">
@@ -428,7 +501,37 @@ export default function App({ storage = defaultStorage }: AppProps) {
           </p>
         )}
         {status === 'ready' && view === 'library' && (
-          <PromptLibrary prompts={prompts} onCreate={openEditor} />
+          <PromptLibrary
+            prompts={visiblePrompts}
+            onCreate={openEditor}
+            query={query}
+            onQueryChange={setQuery}
+            tags={tags}
+            selectedTags={selectedTags}
+            onToggleTag={(tag) =>
+              setSelectedTags((currentTags) =>
+                currentTags.includes(tag)
+                  ? currentTags.filter((currentTag) => currentTag !== tag)
+                  : [...currentTags, tag],
+              )
+            }
+            minRating={minRating}
+            onMinRatingChange={setMinRating}
+            onOpen={(prompt) => {
+              setSelectedPromptId(prompt.id);
+              setView('detail');
+            }}
+            onCopy={(prompt) => void copyPrompt(prompt)}
+            onToggleFavorite={(prompt) => void changeFavorite(prompt)}
+          />
+        )}
+        {status === 'ready' && view === 'detail' && selectedPrompt && (
+          <PromptDetail
+            prompt={selectedPrompt}
+            onBack={() => setView('library')}
+            onCopy={() => void copyPrompt(selectedPrompt)}
+            onToggleFavorite={() => void changeFavorite(selectedPrompt)}
+          />
         )}
         {status === 'ready' && view === 'editor' && (
           <PromptEditor
@@ -443,6 +546,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
           />
         )}
       </section>
+      <Toast message={toast} />
     </main>
   );
 }
