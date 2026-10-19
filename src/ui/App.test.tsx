@@ -1,5 +1,5 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import type { Prompt } from '../domain/types';
@@ -137,7 +137,7 @@ describe('Prompt Diary prompt library', () => {
 
     await user.clear(screen.getByRole('searchbox', { name: 'Rechercher dans les prompts' }));
     await user.click(screen.getByRole('button', { name: 'Tag : analyse' }));
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Note minimale' }), '5');
+    await user.click(screen.getByRole('button', { name: 'Note minimale : 5+' }));
     expect(screen.getByRole('heading', { name: 'Analyse de document' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Réponse client' })).not.toBeInTheDocument();
   });
@@ -229,6 +229,59 @@ describe('Prompt Diary prompt library', () => {
     expect(screen.getByText('Aucun prompt enregistré')).toBeVisible();
   });
 
+  it('shows the quality coach while writing and opens the examples screen', async () => {
+    const user = userEvent.setup();
+    render(<App storage={createMemoryAdapter()} />);
+
+    await screen.findByText('Aucun prompt enregistré');
+    await user.click(screen.getByRole('button', { name: 'Nouveau prompt' }));
+    fireEvent.change(screen.getByLabelText('Corps du prompt'), {
+      target: {
+        value:
+          'Agis comme un analyste senior. Contexte : une équipe produit prépare une décision. Analyse ce document et réponds sous forme de tableau. Ton clair, ne pas inventer.',
+      },
+    });
+
+    expect(await screen.findByText('Qualité : 6/6')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Exemples' }));
+    expect(screen.getByRole('heading', { name: 'Exemples de prompts' })).toBeVisible();
+  });
+
+  it('supports detail actions for editing, duplicating, and deleting', async () => {
+    const user = userEvent.setup();
+    const prompt: Prompt = {
+      id: 'actions',
+      title: 'Prompt actions',
+      body: 'Analyse ce contenu.',
+      tags: ['test'],
+      model: 'GPT',
+      context: 'Test des actions',
+      rating: 4,
+      favorite: false,
+      copyCount: 2,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+    };
+    const adapter = createMemoryAdapter([prompt]);
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    render(<App storage={adapter} />);
+    await screen.findByRole('heading', { name: 'Prompt actions' });
+    await user.click(screen.getByRole('button', { name: 'Ouvrir Prompt actions' }));
+    await user.click(screen.getByRole('button', { name: 'Éditer' }));
+    expect(screen.getByRole('heading', { name: 'Modifier le prompt' })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    await user.click(screen.getByRole('button', { name: 'Ouvrir Prompt actions' }));
+    await user.click(screen.getByRole('button', { name: 'Dupliquer' }));
+    expect(await screen.findByRole('heading', { name: 'Prompt actions (copie)' })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Supprimer' }));
+
+    expect(confirm).toHaveBeenCalled();
+    expect(await screen.findByRole('heading', { name: 'Prompt actions' })).toBeVisible();
+    await expect(adapter.list()).resolves.toHaveLength(1);
+    confirm.mockRestore();
+  });
+
   it('exports a versioned JSON file from settings', async () => {
     const user = userEvent.setup();
     const prompt: Prompt = {
@@ -293,6 +346,35 @@ describe('Prompt Diary prompt library', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('1 ajoutés / 1 ignorés');
     await expect(adapter.list()).resolves.toHaveLength(2);
     expect(screen.getByRole('heading', { name: 'Ajouté' })).toBeVisible();
+  });
+
+  it('clears the library from settings after confirmation', async () => {
+    const user = userEvent.setup();
+    const prompt: Prompt = {
+      id: 'clearable',
+      title: 'À effacer',
+      body: 'Prompt temporaire.',
+      tags: [],
+      model: '',
+      context: '',
+      rating: 3,
+      favorite: false,
+      copyCount: 0,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+    };
+    const adapter = createMemoryAdapter([prompt]);
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    render(<App storage={adapter} />);
+    await screen.findByRole('heading', { name: 'À effacer' });
+    await user.click(screen.getByRole('button', { name: 'Réglages' }));
+    await user.click(screen.getByRole('button', { name: 'Effacer tout' }));
+
+    expect(confirm).toHaveBeenCalled();
+    expect(await screen.findByRole('heading', { name: 'Votre carnet de prompts' })).toBeVisible();
+    await expect(adapter.list()).resolves.toEqual([]);
+    confirm.mockRestore();
   });
 
   it('shows the local-only guarantee and a clear no-results state', async () => {

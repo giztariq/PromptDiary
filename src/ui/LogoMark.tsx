@@ -1,6 +1,10 @@
 import { useEffect, useRef } from 'react';
 
-export function LogoMark() {
+interface LogoMarkProps {
+  size?: number;
+}
+
+export function LogoMark({ size = 24 }: LogoMarkProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -20,8 +24,8 @@ export function LogoMark() {
       ref={svgRef}
       aria-hidden="true"
       focusable="false"
-      width="24"
-      height="24"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       role="img"
     >

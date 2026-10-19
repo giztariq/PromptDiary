@@ -25,7 +25,7 @@ describe('PromptSearch tag chips', () => {
     expect(cross).toBeVisible();
     expect(cross).toHaveAttribute('aria-hidden', 'true');
     expect(within(unselected).queryByText('×')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getAllByRole('button')).toHaveLength(6);
 
     await user.tab();
     expect(screen.getByRole('searchbox')).toHaveFocus();
@@ -46,6 +46,8 @@ describe('PromptSearch tag chips', () => {
     expect(onToggleTag).toHaveBeenNthCalledWith(3, 'email');
     expect(onToggleTag).toHaveBeenCalledTimes(3);
     await user.tab();
-    expect(screen.getByRole('combobox', { name: 'Note minimale' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Note minimale : Toutes' })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Note minimale : 3+' })).toHaveFocus();
   });
 });

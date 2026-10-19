@@ -72,6 +72,59 @@ kbd {
     padding: 40px 0 56px;
   }
 
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+    backdrop-filter: blur(12px);
+  }
+
+  .app-header__inner {
+    display: flex;
+    width: min(100% - 48px, 1024px);
+    min-height: 64px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0 auto;
+  }
+
+  .brand-lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink);
+    font-family: 'Fraunces Variable', Fraunces, Georgia, serif;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 28px;
+  }
+
+  .shortcut-key {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+    border-radius: 6px;
+    padding: 0 6px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 20px;
+  }
+
+  .page-transition {
+    animation: page-fade-in 200ms ease both;
+  }
+
+  .prompt-excerpt--mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    line-height: 20px;
+  }
+
   .eyebrow {
     color: var(--accent);
     font-size: 12px;
@@ -317,6 +370,7 @@ kbd {
   }
 
   .prompt-card {
+    position: relative;
     padding: 20px;
   }
 
@@ -339,6 +393,146 @@ kbd {
   .prompt-card[aria-disabled='true'] {
     opacity: 0.6;
     pointer-events: none;
+  }
+
+  .prompt-card__copy {
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+
+  .prompt-card:hover .prompt-card__copy,
+  .prompt-card:focus-within .prompt-card__copy {
+    opacity: 1;
+  }
+
+  .prompt-card__favorite .button-quiet {
+    min-height: 36px;
+    padding: 4px 8px;
+  }
+
+  .rating-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .rating-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--border);
+  }
+
+  .rating-dot--filled {
+    background: var(--accent);
+  }
+
+  .editor-layout {
+    display: grid;
+    gap: 24px;
+  }
+
+  .coach-panel {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface-2);
+    padding: 20px;
+  }
+
+  .coach-score {
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 20px;
+  }
+
+  .coach-score--low {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+
+  .coach-score--medium {
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+  }
+
+  .coach-score--high {
+    background: var(--surface);
+    color: var(--success);
+  }
+
+  .coach-progress {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--border);
+  }
+
+  .coach-progress__bar {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    transition:
+      width 300ms ease,
+      background-color 300ms ease;
+  }
+
+  .coach-progress__bar--low {
+    background: var(--danger);
+  }
+
+  .coach-progress__bar--medium {
+    background: var(--accent);
+  }
+
+  .coach-progress__bar--high {
+    background: var(--success);
+  }
+
+  .coach-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+  }
+
+  .coach-check:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .coach-check__icon {
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 20px;
+  }
+
+  .coach-check__icon--passed {
+    color: var(--success);
+  }
+
+  .check-enter {
+    animation: check-appear 200ms ease both;
+  }
+
+  .editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+  }
+
+  .toast-enter {
+    animation: toast-slide-in 180ms ease both;
   }
 
   .prompt-excerpt {
@@ -428,6 +622,40 @@ kbd {
     }
   }
 
+  @keyframes page-fade-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes check-appear {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes toast-slide-in {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -440,9 +668,45 @@ kbd {
   }
 
   @media (max-width: 640px) {
+    .app-header__inner {
+      width: min(100% - 32px, 1024px);
+    }
+
     .page-shell {
       width: min(100% - 32px, 1024px);
       padding-top: 32px;
+    }
+
+    .app-header__actions .button-secondary {
+      display: none;
+    }
+
+    .prompt-card__copy {
+      opacity: 1;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .editor-layout {
+      grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+      align-items: start;
+    }
+
+    .coach-panel {
+      position: sticky;
+      top: 84px;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .editor-actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 12;
+      margin: 0 -24px -24px;
+      background: color-mix(in srgb, var(--bg) 96%, transparent);
+      padding: 12px 24px;
+      backdrop-filter: blur(12px);
     }
   }
 }

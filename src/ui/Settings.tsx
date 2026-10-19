@@ -2,11 +2,21 @@ interface SettingsProps {
   onBack: () => void;
   onExport: () => void;
   onImport: (file: File) => void;
+  onClearAll?: () => void;
 }
 
-export function Settings({ onBack, onExport, onImport }: SettingsProps) {
+export function Settings({ onBack, onExport, onImport, onClearAll }: SettingsProps) {
+  function handleClearAll() {
+    if (
+      onClearAll &&
+      window.confirm('Effacer toute la bibliothèque ? Cette action est irréversible.')
+    ) {
+      onClearAll();
+    }
+  }
+
   return (
-    <section aria-labelledby="settings-heading" className="surface-card mt-10 p-6 sm:p-8">
+    <section aria-labelledby="settings-heading" className="surface-card mt-10 space-y-8 p-6 sm:p-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="eyebrow">Réglages</p>
@@ -14,37 +24,81 @@ export function Settings({ onBack, onExport, onImport }: SettingsProps) {
             Bibliothèque locale
           </h2>
         </div>
-        <button type="button" onClick={onBack} className="button-secondary">
+        <button type="button" onClick={onBack} className="button-secondary" aria-label="Retour">
           Retour
         </button>
       </div>
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        <button type="button" onClick={onExport} className="button-secondary">
-          Exporter la bibliothèque
-        </button>
-        <label className="button-secondary cursor-pointer text-left">
-          Importer une bibliothèque JSON
-          <input
-            type="file"
-            accept="application/json,.json"
-            aria-label="Importer une bibliothèque JSON"
-            className="sr-only"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) {
-                onImport(file);
-                event.currentTarget.value = '';
-              }
-            }}
-          />
-        </label>
-      </div>
-      <div className="mt-8 rounded-control border border-border bg-surface-2 p-4 text-sm leading-6 text-muted">
-        <h3 className="font-semibold text-ink">À propos</h3>
-        <p className="mt-2">
-          Prompt Diary garde vos prompts dans votre navigateur. Aucun compte ni serveur.
+
+      <section aria-labelledby="library-heading" className="space-y-4">
+        <div>
+          <h3 id="library-heading" className="text-lg font-semibold text-ink">
+            Bibliothèque
+          </h3>
+          <p className="mt-1 text-sm leading-6 text-muted">
+            Gérez vos données locales et conservez une copie de vos prompts.
+          </p>
+        </div>
+
+        <div className="rounded-control border border-border bg-surface-2 p-4 sm:p-5">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={onExport}
+              className="button-primary"
+              aria-label="Exporter la bibliothèque"
+            >
+              Exporter la bibliothèque
+            </button>
+            <label className="button-secondary cursor-pointer text-left">
+              Importer une bibliothèque JSON
+              <input
+                type="file"
+                accept="application/json,.json"
+                aria-label="Importer une bibliothèque JSON"
+                className="sr-only"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) {
+                    onImport(file);
+                    event.currentTarget.value = '';
+                  }
+                }}
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="error-message flex flex-wrap items-center justify-between gap-4 p-4">
+          <div>
+            <h4 className="font-semibold">Zone de danger</h4>
+            <p className="mt-1 text-sm leading-6 text-muted">
+              Efface définitivement tous les prompts enregistrés dans ce navigateur.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleClearAll}
+            className="button-quiet text-danger"
+            aria-label="Effacer tout"
+          >
+            Effacer tout
+          </button>
+        </div>
+      </section>
+
+      <section
+        aria-labelledby="about-heading"
+        className="rounded-control border border-border bg-surface-2 p-4 sm:p-5"
+      >
+        <h3 id="about-heading" className="font-semibold text-ink">
+          À propos
+        </h3>
+        <p className="mt-2 text-sm leading-6 text-muted">Version 0.1.0</p>
+        <p className="mt-1 text-sm leading-6 text-muted">
+          Prompt Diary est local-first : vos prompts restent dans votre navigateur, sans compte ni
+          serveur.
         </p>
-      </div>
+      </section>
     </section>
   );
 }

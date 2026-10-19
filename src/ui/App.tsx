@@ -19,12 +19,15 @@ import { PromptSearch } from './PromptSearch';
 import { Settings } from './Settings';
 import { Toast } from './Toast';
 import { LogoMark } from './LogoMark';
+import { QualityCoach } from './QualityCoach';
+import { Examples } from './Examples';
 
 interface AppProps {
   storage?: StorageAdapter;
 }
 
 type LibraryStatus = 'loading' | 'ready' | 'error';
+type AppView = 'library' | 'editor' | 'detail' | 'settings' | 'examples';
 
 const defaultStorage = createIndexedDbAdapter();
 
@@ -67,6 +70,7 @@ interface PromptLibraryProps {
   prompts: Prompt[];
   hasPrompts: boolean;
   onCreate: () => void;
+  onExamples: () => void;
   onSettings: () => void;
   query: string;
   onQueryChange: (query: string) => void;
@@ -85,6 +89,7 @@ function PromptLibrary({
   prompts,
   hasPrompts,
   onCreate,
+  onExamples,
   onSettings,
   query,
   onQueryChange,
@@ -107,9 +112,6 @@ function PromptLibrary({
             Vos prompts
           </h2>
         </div>
-        <button type="button" onClick={onCreate} aria-keyshortcuts="n" className="button-primary">
-          Nouveau prompt
-        </button>
         <button type="button" onClick={onSettings} className="button-secondary">
           Réglages
         </button>
@@ -136,15 +138,26 @@ function PromptLibrary({
               </button>
             </>
           ) : (
-            <>
-              <h3 className="text-base font-semibold">Aucun prompt enregistré</h3>
-              <p className="mt-2 text-sm text-muted">
-                Créez votre premier prompt pour commencer votre bibliothèque locale.
+            <div className="empty-state__content">
+              <LogoMark size={40} />
+              <p className="eyebrow mt-5">Aucun prompt enregistré</p>
+              <h3 className="mt-2 text-2xl font-semibold">Votre carnet de prompts</h3>
+              <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted">
+                Gardez vos meilleures formulations à portée de main, notez ce qui fonctionne et
+                réutilisez-les sans repartir de zéro.
               </p>
-              <button type="button" onClick={onCreate} className="button-secondary mt-4">
-                Créer un prompt
-              </button>
-            </>
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                <button type="button" onClick={onCreate} className="button-primary">
+                  Créer un prompt
+                </button>
+                <button type="button" onClick={onExamples} className="button-secondary">
+                  Explorer les exemples
+                </button>
+              </div>
+              <p className="mt-8 border-t border-border pt-4 text-xs text-muted">
+                Tout est local, rien ne part sur un serveur.
+              </p>
+            </div>
           )}
         </div>
       ) : (
@@ -171,9 +184,11 @@ interface PromptEditorProps {
   errors: PromptDraftErrors;
   saveError: string;
   saving: boolean;
+  isEditing: boolean;
   onChange: (field: keyof PromptDraft, value: string | number) => void;
   onCancel: () => void;
   onSubmit: () => void;
+  onCopyPreview: () => void;
 }
 
 function PromptEditor({
@@ -182,176 +197,195 @@ function PromptEditor({
   errors,
   saveError,
   saving,
+  isEditing,
   onChange,
   onCancel,
   onSubmit,
+  onCopyPreview,
 }: PromptEditorProps) {
   const detection = detectVaguePrompt(draft);
 
   return (
-    <section
-      aria-labelledby="editor-heading"
-      aria-busy={saving}
-      className="surface-card mt-10 p-6 sm:p-8"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <section aria-labelledby="editor-heading" aria-busy={saving} className="mt-8">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Éditeur</p>
           <h2 id="editor-heading" className="mt-2 text-2xl font-semibold tracking-tight">
-            Nouveau prompt
+            {isEditing ? 'Modifier le prompt' : 'Nouveau prompt'}
           </h2>
         </div>
-        <button
-          type="button"
-          onClick={onCancel}
-          aria-keyshortcuts="Escape"
-          className="button-secondary"
-        >
-          Annuler
-        </button>
+        <span className="badge">Brouillon local</span>
       </div>
 
-      <form
-        className="mt-8 grid gap-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          onSubmit();
-        }}
-        noValidate
-      >
-        <div>
-          <label htmlFor="prompt-title" className="text-sm font-semibold text-ink">
-            Titre
-          </label>
-          <input
-            id="prompt-title"
-            value={draft.title}
-            onChange={(event) => onChange('title', event.target.value)}
-            aria-invalid={Boolean(errors.title)}
-            aria-describedby={errors.title ? 'prompt-title-error' : undefined}
-            className="form-input mt-2"
-          />
-          {errors.title && (
-            <p id="prompt-title-error" className="mt-1 text-sm text-danger">
-              {errors.title}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="prompt-body" className="text-sm font-semibold text-ink">
-            Corps du prompt
-          </label>
-          <textarea
-            id="prompt-body"
-            value={draft.body}
-            onChange={(event) => onChange('body', event.target.value)}
-            aria-invalid={Boolean(errors.body)}
-            aria-describedby={errors.body ? 'prompt-body-error' : undefined}
-            rows={7}
-            className="form-textarea mt-2"
-          />
-          {errors.body && (
-            <p id="prompt-body-error" className="mt-1 text-sm text-danger">
-              {errors.body}
-            </p>
-          )}
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label htmlFor="prompt-tags" className="text-sm font-semibold text-ink">
-              Tags
-            </label>
-            <input
-              id="prompt-tags"
-              value={tagsValue}
-              onChange={(event) => onChange('tags', event.target.value)}
-              placeholder="analyse, synthèse"
-              className="form-input mt-2"
-            />
-            <p className="mt-1 text-xs text-muted">Séparez les tags par des virgules.</p>
-          </div>
-          <div>
-            <label htmlFor="prompt-model" className="text-sm font-semibold text-ink">
-              Modèle
-            </label>
-            <input
-              id="prompt-model"
-              value={draft.model}
-              onChange={(event) => onChange('model', event.target.value)}
-              placeholder="GPT, Claude…"
-              className="form-input mt-2"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="prompt-context" className="text-sm font-semibold text-ink">
-            Contexte
-          </label>
-          <textarea
-            id="prompt-context"
-            value={draft.context}
-            onChange={(event) => onChange('context', event.target.value)}
-            rows={3}
-            placeholder="À quoi sert ce prompt ?"
-            className="form-textarea mt-2"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="prompt-rating" className="text-sm font-semibold text-ink">
-            Note
-          </label>
-          <select
-            id="prompt-rating"
-            value={draft.rating}
-            onChange={(event) => onChange('rating', Number(event.target.value))}
-            aria-invalid={Boolean(errors.rating)}
-            aria-describedby={errors.rating ? 'prompt-rating-error' : undefined}
-            className="form-select mt-2 sm:max-w-xs"
-          >
-            <option value={0}>Choisir une note</option>
-            {[1, 2, 3, 4, 5].map((rating) => (
-              <option key={rating} value={rating}>
-                {rating} / 5
-              </option>
-            ))}
-          </select>
-          {errors.rating && (
-            <p id="prompt-rating-error" className="mt-1 text-sm text-danger">
-              {errors.rating}
-            </p>
-          )}
-        </div>
-
-        <div
-          className="rounded-control border border-accent-soft bg-accent-soft p-4"
-          aria-live="polite"
+      <div className="editor-layout">
+        <form
+          className="surface-card grid gap-5 p-6 sm:p-8"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit();
+          }}
+          noValidate
         >
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold text-ink">Aperçu</span>
-            {detection.vague ? (
-              <span className="badge">À préciser</span>
-            ) : (
-              <span className="text-sm font-medium text-success">Prompt suffisamment précis</span>
+          <div>
+            <label htmlFor="prompt-title" className="text-sm font-semibold text-ink">
+              Titre
+            </label>
+            <input
+              id="prompt-title"
+              value={draft.title}
+              onChange={(event) => onChange('title', event.target.value)}
+              aria-invalid={Boolean(errors.title)}
+              aria-describedby={errors.title ? 'prompt-title-error' : undefined}
+              className="form-input mt-2"
+            />
+            {errors.title && (
+              <p id="prompt-title-error" className="mt-1 text-sm text-danger">
+                {errors.title}
+              </p>
             )}
           </div>
-          {detection.vague && (
-            <p className="mt-2 text-sm text-accent-dark">{detection.suggestion}</p>
-          )}
-        </div>
 
-        {saveError && (
-          <p role="alert" className="error-message p-3 text-sm">
-            {saveError}
-          </p>
-        )}
-        <button type="submit" disabled={saving} className="button-primary w-full">
-          {saving ? 'Enregistrement…' : 'Enregistrer le prompt'}
-        </button>
-      </form>
+          <div>
+            <label htmlFor="prompt-body" className="text-sm font-semibold text-ink">
+              Corps du prompt
+            </label>
+            <textarea
+              id="prompt-body"
+              value={draft.body}
+              onChange={(event) => onChange('body', event.target.value)}
+              aria-invalid={Boolean(errors.body)}
+              aria-describedby={errors.body ? 'prompt-body-error' : undefined}
+              rows={10}
+              className="form-textarea mt-2 font-mono text-sm"
+            />
+            {errors.body && (
+              <p id="prompt-body-error" className="mt-1 text-sm text-danger">
+                {errors.body}
+              </p>
+            )}
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label htmlFor="prompt-tags" className="text-sm font-semibold text-ink">
+                Tags
+              </label>
+              <input
+                id="prompt-tags"
+                value={tagsValue}
+                onChange={(event) => onChange('tags', event.target.value)}
+                placeholder="analyse, synthèse"
+                className="form-input mt-2"
+              />
+              <p className="mt-1 text-xs text-muted">Séparez les tags par des virgules.</p>
+            </div>
+            <div>
+              <label htmlFor="prompt-model" className="text-sm font-semibold text-ink">
+                Modèle
+              </label>
+              <input
+                id="prompt-model"
+                value={draft.model}
+                onChange={(event) => onChange('model', event.target.value)}
+                placeholder="GPT, Claude…"
+                className="form-input mt-2"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="prompt-context" className="text-sm font-semibold text-ink">
+              Contexte
+            </label>
+            <textarea
+              id="prompt-context"
+              value={draft.context}
+              onChange={(event) => onChange('context', event.target.value)}
+              rows={3}
+              placeholder="À quoi sert ce prompt ?"
+              className="form-textarea mt-2"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="prompt-rating" className="text-sm font-semibold text-ink">
+              Note
+            </label>
+            <select
+              id="prompt-rating"
+              value={draft.rating}
+              onChange={(event) => onChange('rating', Number(event.target.value))}
+              aria-invalid={Boolean(errors.rating)}
+              aria-describedby={errors.rating ? 'prompt-rating-error' : undefined}
+              className="form-select mt-2 sm:max-w-xs"
+            >
+              <option value={0}>Choisir une note</option>
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <option key={rating} value={rating}>
+                  {rating} / 5
+                </option>
+              ))}
+            </select>
+            {errors.rating && (
+              <p id="prompt-rating-error" className="mt-1 text-sm text-danger">
+                {errors.rating}
+              </p>
+            )}
+          </div>
+
+          {saveError && (
+            <p role="alert" className="error-message p-3 text-sm">
+              {saveError}
+            </p>
+          )}
+
+          <div className="editor-actions">
+            <button
+              type="button"
+              onClick={onCancel}
+              aria-keyshortcuts="Escape"
+              className="button-quiet"
+            >
+              Annuler
+            </button>
+            <button type="submit" disabled={saving} className="button-primary">
+              {saving ? 'Enregistrement…' : 'Enregistrer le prompt'}
+            </button>
+          </div>
+        </form>
+
+        <div className="grid gap-5">
+          <section className="surface-card p-5" aria-labelledby="preview-heading">
+            <div className="flex items-center justify-between gap-3">
+              <h3 id="preview-heading" className="text-lg font-semibold text-ink">
+                Aperçu
+              </h3>
+              <button type="button" onClick={onCopyPreview} className="button-secondary text-xs">
+                Copier
+              </button>
+            </div>
+            <pre className="mt-4 min-h-40 whitespace-pre-wrap rounded-control border border-border bg-surface-2 p-4 font-mono text-xs leading-6 text-ink">
+              {draft.body || 'Votre prompt apparaîtra ici.'}
+            </pre>
+            <div className="mt-4 rounded-control border border-accent-soft bg-accent-soft p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-semibold text-ink">Détection rapide</span>
+                {detection.vague ? (
+                  <span className="badge">À préciser</span>
+                ) : (
+                  <span className="text-sm font-medium text-success">
+                    Prompt suffisamment précis
+                  </span>
+                )}
+              </div>
+              {detection.vague && (
+                <p className="mt-2 text-sm text-accent-dark">{detection.suggestion}</p>
+              )}
+            </div>
+          </section>
+          <QualityCoach text={draft.body} />
+        </div>
+      </div>
     </section>
   );
 }
@@ -360,12 +394,14 @@ export default function App({ storage = defaultStorage }: AppProps) {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [status, setStatus] = useState<LibraryStatus>('loading');
   const [loadAttempt, setLoadAttempt] = useState(0);
-  const [view, setView] = useState<'library' | 'editor' | 'detail' | 'settings'>('library');
+  const [view, setView] = useState<AppView>('library');
   const [selectedPromptId, setSelectedPromptId] = useState<string>();
+  const [editingPromptId, setEditingPromptId] = useState<string>();
   const [query, setQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [minRating, setMinRating] = useState(0);
   const [toast, setToast] = useState('');
+  const [toastNonce, setToastNonce] = useState(0);
   const [draft, setDraft] = useState<PromptDraft>(emptyDraft);
   const [tagsValue, setTagsValue] = useState('');
   const [errors, setErrors] = useState<PromptDraftErrors>({});
@@ -384,6 +420,11 @@ export default function App({ storage = defaultStorage }: AppProps) {
     [minRating, prompts, query, selectedTags],
   );
   const selectedPrompt = prompts.find((prompt) => prompt.id === selectedPromptId);
+
+  function showToast(message: string) {
+    setToast(message);
+    setToastNonce((nonce) => nonce + 1);
+  }
 
   useEffect(() => {
     let active = true;
@@ -419,7 +460,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
         return;
       }
 
-      if (event.metaKey || event.ctrlKey || event.altKey || isTyping) {
+      if (event.altKey || isTyping) {
         return;
       }
 
@@ -439,18 +480,40 @@ export default function App({ storage = defaultStorage }: AppProps) {
     return () => window.removeEventListener('keydown', handleShortcut);
   }, [status, view]);
 
-  function openEditor() {
-    setDraft(emptyDraft);
-    setTagsValue('');
+  function openEditor(prompt?: Prompt, initialDraft?: PromptDraft) {
+    setEditingPromptId(prompt?.id);
+    setDraft(
+      initialDraft ??
+        (prompt
+          ? {
+              title: prompt.title,
+              body: prompt.body,
+              tags: [...prompt.tags],
+              model: prompt.model,
+              context: prompt.context,
+              rating: prompt.rating,
+            }
+          : emptyDraft),
+    );
+    setTagsValue(
+      initialDraft ? initialDraft.tags.join(', ') : prompt ? prompt.tags.join(', ') : '',
+    );
     setErrors({});
     setSaveError('');
-    setSelectedPromptId(undefined);
+    setSelectedPromptId(prompt?.id);
     setView('editor');
   }
 
   function openSettings() {
     setSelectedPromptId(undefined);
+    setEditingPromptId(undefined);
     setView('settings');
+  }
+
+  function openExamples() {
+    setSelectedPromptId(undefined);
+    setEditingPromptId(undefined);
+    setView('examples');
   }
 
   function updateDraft(field: keyof PromptDraft, value: string | number) {
@@ -473,25 +536,50 @@ export default function App({ storage = defaultStorage }: AppProps) {
     }
 
     const timestamp = new Date().toISOString();
-    const prompt = createPromptFromDraft(draft, createId(), timestamp);
+    const existing = editingPromptId
+      ? prompts.find((currentPrompt) => currentPrompt.id === editingPromptId)
+      : undefined;
+    const prompt = createPromptFromDraft(draft, existing?.id ?? createId(), timestamp);
+    const savedPrompt = existing
+      ? {
+          ...prompt,
+          favorite: existing.favorite,
+          copyCount: existing.copyCount,
+          createdAt: existing.createdAt,
+        }
+      : prompt;
     setSaving(true);
     try {
-      await storage.save(prompt);
-      setPrompts((currentPrompts) => [...currentPrompts, prompt]);
+      await storage.save(savedPrompt);
+      setPrompts((currentPrompts) =>
+        existing
+          ? currentPrompts.map((currentPrompt) =>
+              currentPrompt.id === savedPrompt.id ? savedPrompt : currentPrompt,
+            )
+          : [...currentPrompts, savedPrompt],
+      );
+      setEditingPromptId(undefined);
+      showToast('Prompt enregistré');
       setView('library');
     } catch {
       setSaveError('Impossible d’enregistrer ce prompt.');
+      showToast('Impossible d’enregistrer le prompt.');
     } finally {
       setSaving(false);
     }
   }
 
+  async function copyText(text: string, successMessage: string) {
+    if (!navigator.clipboard) {
+      throw new Error('Clipboard unavailable');
+    }
+    await navigator.clipboard.writeText(text);
+    showToast(successMessage);
+  }
+
   async function copyPrompt(prompt: Prompt) {
     try {
-      if (!navigator.clipboard) {
-        throw new Error('Clipboard unavailable');
-      }
-      await navigator.clipboard.writeText(prompt.body);
+      await copyText(prompt.body, 'Prompt copié');
       const updated = incrementCopyCount(prompt, new Date().toISOString());
       await storage.save(updated);
       setPrompts((currentPrompts) =>
@@ -499,9 +587,21 @@ export default function App({ storage = defaultStorage }: AppProps) {
           currentPrompt.id === updated.id ? updated : currentPrompt,
         ),
       );
-      setToast('Prompt copié');
     } catch {
-      setToast('Impossible de copier le prompt.');
+      showToast('Impossible de copier le prompt.');
+    }
+  }
+
+  async function copyDraftPreview() {
+    if (!draft.body.trim()) {
+      showToast('Ajoutez un corps avant de copier.');
+      return;
+    }
+
+    try {
+      await copyText(draft.body, 'Aperçu copié');
+    } catch {
+      showToast('Impossible de copier le prompt.');
     }
   }
 
@@ -515,7 +615,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
         ),
       );
     } catch {
-      setToast('Impossible de modifier le favori.');
+      showToast('Impossible de modifier le favori.');
     }
   }
 
@@ -527,7 +627,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
     link.download = 'prompt-diary-export.json';
     link.click();
     URL.revokeObjectURL(url);
-    setToast('Bibliothèque exportée');
+    showToast('Bibliothèque exportée');
   }
 
   async function importLibrary(file: File) {
@@ -539,29 +639,91 @@ export default function App({ storage = defaultStorage }: AppProps) {
       }
       setPrompts(report.prompts);
       setView('library');
-      setToast(`${report.added} ajoutés / ${report.ignored} ignorés`);
+      showToast(`${report.added} ajoutés / ${report.ignored} ignorés`);
     } catch {
-      setToast('Import invalide : choisissez un export Prompt Diary.');
+      showToast('Import invalide : choisissez un export Prompt Diary.');
     }
   }
 
+  async function deletePrompt(prompt: Prompt) {
+    try {
+      await storage.remove(prompt.id);
+      setPrompts((currentPrompts) =>
+        currentPrompts.filter((currentPrompt) => currentPrompt.id !== prompt.id),
+      );
+      setSelectedPromptId(undefined);
+      setView('library');
+      showToast('Prompt supprimé');
+    } catch {
+      showToast('Impossible de supprimer le prompt.');
+    }
+  }
+
+  async function duplicatePrompt(prompt: Prompt) {
+    const timestamp = new Date().toISOString();
+    const duplicate: Prompt = {
+      ...prompt,
+      id: createId(),
+      title: `${prompt.title} (copie)`,
+      favorite: false,
+      copyCount: 0,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      tags: [...prompt.tags],
+    };
+
+    try {
+      await storage.save(duplicate);
+      setPrompts((currentPrompts) => [...currentPrompts, duplicate]);
+      setSelectedPromptId(duplicate.id);
+      setView('detail');
+      showToast('Prompt dupliqué');
+    } catch {
+      showToast('Impossible de dupliquer le prompt.');
+    }
+  }
+
+  async function clearLibrary() {
+    try {
+      await storage.clear();
+      setPrompts([]);
+      setSelectedPromptId(undefined);
+      setView('library');
+      showToast('Bibliothèque effacée');
+    } catch {
+      showToast('Impossible d’effacer la bibliothèque.');
+    }
+  }
+
+  const isEmptyLibrary = status === 'ready' && view === 'library' && prompts.length === 0;
+
   return (
     <main className="app-shell">
-      <section className="page-shell">
-        <header className="hero rounded-card border border-border p-6 sm:p-8">
-          <div className="flex items-center gap-3">
+      <header className="app-header">
+        <div className="app-header__inner">
+          <button type="button" onClick={() => setView('library')} className="brand-lockup">
             <LogoMark />
-            <h1 className="font-display text-[32px] font-semibold leading-10 tracking-tight">
-              Prompt Diary
-            </h1>
+            <span>Prompt Diary</span>
+          </button>
+          <div className="app-header__actions flex items-center gap-2">
+            <button type="button" onClick={openExamples} className="button-secondary">
+              Exemples
+            </button>
+            <button
+              type="button"
+              onClick={() => openEditor()}
+              aria-label="Nouveau prompt"
+              aria-keyshortcuts="Control+N Meta+N n"
+              className="button-primary inline-flex items-center gap-2"
+            >
+              <span>Nouveau prompt</span>
+              <kbd className="shortcut-key">⌘N</kbd>
+            </button>
           </div>
-          <p className="eyebrow mt-6">Local-first prompt journal</p>
-          <p className="mt-3 max-w-2xl text-base leading-6 text-muted sm:text-lg sm:leading-7">
-            Gardez vos prompts utiles, notez ce qui fonctionne et retrouvez-les en quelques
-            secondes.
-          </p>
-        </header>
+        </div>
+      </header>
 
+      <section className="page-shell">
         {status === 'loading' && (
           <div
             role="status"
@@ -587,85 +749,104 @@ export default function App({ storage = defaultStorage }: AppProps) {
             </button>
           </div>
         )}
-        {status === 'ready' && view === 'library' && (
-          <PromptLibrary
-            prompts={visiblePrompts}
-            hasPrompts={prompts.length > 0}
-            onCreate={openEditor}
-            onSettings={openSettings}
-            query={query}
-            onQueryChange={setQuery}
-            tags={tags}
-            selectedTags={selectedTags}
-            onToggleTag={(tag) =>
-              setSelectedTags((currentTags) =>
-                currentTags.includes(tag)
-                  ? currentTags.filter((currentTag) => currentTag !== tag)
-                  : [...currentTags, tag],
-              )
-            }
-            minRating={minRating}
-            onMinRatingChange={setMinRating}
-            onOpen={(prompt) => {
-              setSelectedPromptId(prompt.id);
-              setView('detail');
-            }}
-            onCopy={(prompt) => void copyPrompt(prompt)}
-            onToggleFavorite={(prompt) => void changeFavorite(prompt)}
-            onClearFilters={() => {
-              setQuery('');
-              setSelectedTags([]);
-              setMinRating(0);
-            }}
-          />
-        )}
-        {status === 'ready' && view === 'settings' && (
-          <Settings
-            onBack={() => setView('library')}
-            onExport={exportLibrary}
-            onImport={importLibrary}
-          />
-        )}
-        {status === 'ready' && view === 'detail' && selectedPrompt && (
-          <PromptDetail
-            prompt={selectedPrompt}
-            onBack={() => setView('library')}
-            onCopy={() => void copyPrompt(selectedPrompt)}
-            onToggleFavorite={() => void changeFavorite(selectedPrompt)}
-          />
-        )}
-        {status === 'ready' && view === 'detail' && !selectedPrompt && (
-          <div role="alert" className="state-card error-state text-left">
-            <h2 className="text-base font-semibold">Prompt introuvable</h2>
-            <p className="mt-2 text-sm leading-6">
-              Ce prompt n’est plus disponible dans la bibliothèque.
-            </p>
-            <button
-              type="button"
-              onClick={() => setView('library')}
-              className="button-secondary mt-4"
-            >
-              Retour à la bibliothèque
-            </button>
-          </div>
-        )}
-        {status === 'ready' && view === 'editor' && (
-          <PromptEditor
-            draft={draft}
-            tagsValue={tagsValue}
-            errors={errors}
-            saveError={saveError}
-            saving={saving}
-            onChange={updateDraft}
-            onCancel={() => setView('library')}
-            onSubmit={() => void savePrompt()}
-          />
-        )}
+        <div key={`${status}-${view}`} className="page-transition">
+          {status === 'ready' && view === 'library' && (
+            <PromptLibrary
+              prompts={visiblePrompts}
+              hasPrompts={prompts.length > 0}
+              onCreate={() => openEditor()}
+              onExamples={openExamples}
+              onSettings={openSettings}
+              query={query}
+              onQueryChange={setQuery}
+              tags={tags}
+              selectedTags={selectedTags}
+              onToggleTag={(tag) =>
+                setSelectedTags((currentTags) =>
+                  currentTags.includes(tag)
+                    ? currentTags.filter((currentTag) => currentTag !== tag)
+                    : [...currentTags, tag],
+                )
+              }
+              minRating={minRating}
+              onMinRatingChange={setMinRating}
+              onOpen={(prompt) => {
+                setSelectedPromptId(prompt.id);
+                setView('detail');
+              }}
+              onCopy={(prompt) => void copyPrompt(prompt)}
+              onToggleFavorite={(prompt) => void changeFavorite(prompt)}
+              onClearFilters={() => {
+                setQuery('');
+                setSelectedTags([]);
+                setMinRating(0);
+              }}
+            />
+          )}
+          {status === 'ready' && view === 'settings' && (
+            <Settings
+              onBack={() => setView('library')}
+              onExport={exportLibrary}
+              onImport={importLibrary}
+              onClearAll={() => void clearLibrary()}
+            />
+          )}
+          {status === 'ready' && view === 'examples' && (
+            <Examples
+              onBack={() => setView('library')}
+              onUse={(example) => openEditor(undefined, example)}
+            />
+          )}
+          {status === 'ready' && view === 'detail' && selectedPrompt && (
+            <PromptDetail
+              prompt={selectedPrompt}
+              onBack={() => setView('library')}
+              onCopy={() => void copyPrompt(selectedPrompt)}
+              onToggleFavorite={() => void changeFavorite(selectedPrompt)}
+              onEdit={() => openEditor(selectedPrompt)}
+              onDuplicate={() => void duplicatePrompt(selectedPrompt)}
+              onDelete={() => void deletePrompt(selectedPrompt)}
+            />
+          )}
+          {status === 'ready' && view === 'detail' && !selectedPrompt && (
+            <div role="alert" className="state-card error-state text-left">
+              <h2 className="text-base font-semibold">Prompt introuvable</h2>
+              <p className="mt-2 text-sm leading-6">
+                Ce prompt n’est plus disponible dans la bibliothèque.
+              </p>
+              <button
+                type="button"
+                onClick={() => setView('library')}
+                className="button-secondary mt-4"
+              >
+                Retour à la bibliothèque
+              </button>
+            </div>
+          )}
+          {status === 'ready' && view === 'editor' && (
+            <PromptEditor
+              draft={draft}
+              tagsValue={tagsValue}
+              errors={errors}
+              saveError={saveError}
+              saving={saving}
+              isEditing={Boolean(editingPromptId)}
+              onChange={updateDraft}
+              onCancel={() => setView('library')}
+              onSubmit={() => void savePrompt()}
+              onCopyPreview={() => void copyDraftPreview()}
+            />
+          )}
+        </div>
       </section>
-      <footer className="mx-auto max-w-[1024px] border-t border-border px-6 pt-5 text-center text-sm text-muted sm:px-0">
-        Tout est local, rien ne part sur un serveur.
-      </footer>
-      <Toast message={toast} />
+      {isEmptyLibrary ? (
+        <p className="sr-only">Tout est local, rien ne part sur un serveur.</p>
+      ) : (
+        <footer className="mx-auto max-w-[1024px] border-t border-border px-6 pt-5 text-center text-sm text-muted sm:px-0">
+          Tout est local, rien ne part sur un serveur.
+        </footer>
+      )}
+      <Toast key={toastNonce} message={toast} />
     </main>
   );
 }

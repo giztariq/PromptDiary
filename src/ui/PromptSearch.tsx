@@ -37,7 +37,11 @@ export function PromptSearch({
           /
         </span>
       </div>
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par tag">
+      <div
+        className="flex flex-wrap items-center gap-2"
+        role="group"
+        aria-label="Filtrer les prompts"
+      >
         {tags.map((tag) => {
           const selected = selectedTags.includes(tag);
           return (
@@ -54,22 +58,21 @@ export function PromptSearch({
             </button>
           );
         })}
-        <label className="ml-auto flex items-center gap-2 text-sm text-muted">
-          <span>Note minimale</span>
-          <select
-            aria-label="Note minimale"
-            value={minRating}
-            onChange={(event) => onMinRatingChange(Number(event.target.value))}
-            className="form-select w-auto min-w-24"
+        <span className="ml-auto text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+          Note minimale
+        </span>
+        {[0, 3, 4, 5].map((rating) => (
+          <button
+            key={rating}
+            type="button"
+            aria-pressed={minRating === rating}
+            aria-label={rating === 0 ? 'Note minimale : Toutes' : `Note minimale : ${rating}+`}
+            onClick={() => onMinRatingChange(rating)}
+            className="filter-chip"
           >
-            <option value={0}>Toutes</option>
-            {[1, 2, 3, 4, 5].map((rating) => (
-              <option key={rating} value={rating}>
-                {rating}+
-              </option>
-            ))}
-          </select>
-        </label>
+            {rating === 0 ? 'Toutes' : `${rating}+`}
+          </button>
+        ))}
       </div>
     </div>
   );

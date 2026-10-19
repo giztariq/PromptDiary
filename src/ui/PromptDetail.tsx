@@ -6,44 +6,144 @@ interface PromptDetailProps {
   onBack: () => void;
   onCopy: () => void;
   onToggleFavorite: () => void;
+  onEdit?: () => void;
+  onDuplicate?: () => void;
+  onDelete?: () => void;
 }
 
-export function PromptDetail({ prompt, onBack, onCopy, onToggleFavorite }: PromptDetailProps) {
+function formatDate(value: string, withTime = false) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat('fr-FR', {
+    dateStyle: 'medium',
+    ...(withTime ? { timeStyle: 'short' } : {}),
+  }).format(date);
+}
+
+export function PromptDetail({
+  prompt,
+  onBack,
+  onCopy,
+  onToggleFavorite,
+  onEdit,
+  onDuplicate,
+  onDelete,
+}: PromptDetailProps) {
+  const handleDelete = () => {
+    if (window.confirm(`Supprimer « ${prompt.title} » ? Cette action est irréversible.`)) {
+      onDelete?.();
+    }
+  };
+
   return (
     <section aria-labelledby="detail-heading" className="surface-card mt-10 p-6 sm:p-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <p className="eyebrow">Détail</p>
           <h2 id="detail-heading" className="mt-2 text-2xl font-semibold tracking-tight">
             {prompt.title}
           </h2>
         </div>
-        <button type="button" onClick={onBack} className="button-secondary">
-          Retour
+        <div className="flex items-center gap-2">
+          <FavoriteButton
+            favorite={prompt.favorite}
+            promptTitle={prompt.title}
+            onClick={onToggleFavorite}
+          />
+          <button type="button" onClick={onBack} className="button-secondary">
+            Retour
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-8 rounded-control border border-border bg-ink p-4 sm:p-6">
+        <pre
+          aria-label="Corps du prompt"
+          className="max-h-[32rem] overflow-auto whitespace-pre-wrap font-mono text-sm leading-7 text-surface"
+        >
+          {prompt.body}
+        </pre>
+        <button
+          type="button"
+          onClick={onCopy}
+          className="button-primary mt-5 min-h-12 w-full px-5 py-3 text-base"
+        >
+          Copier le prompt
         </button>
       </div>
-      <pre className="mt-8 whitespace-pre-wrap rounded-control bg-ink p-5 font-mono text-sm leading-7 text-surface">
-        {prompt.body}
-      </pre>
+
       {prompt.context && (
-        <p className="mt-5 text-sm leading-6 text-muted">
-          <strong className="text-ink">Contexte :</strong> {prompt.context}
-        </p>
+        <div className="mt-6 rounded-control border border-border bg-surface-2 p-4 text-sm leading-6 text-muted">
+          <p>
+            <strong className="text-ink">Contexte</strong>
+          </p>
+          <p className="mt-1">{prompt.context}</p>
+        </div>
       )}
-      <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-muted">
-        <span>Note : {prompt.rating}/5</span>
-        <span>
-          {prompt.copyCount} copie{prompt.copyCount === 1 ? '' : 's'}
-        </span>
-        <FavoriteButton
-          favorite={prompt.favorite}
-          promptTitle={prompt.title}
-          onClick={onToggleFavorite}
-        />
+
+      <div className="mt-8 border-t border-border pt-6">
+        <dl className="grid gap-5 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-muted">Tags</dt>
+            <dd className="mt-2 flex flex-wrap gap-2">
+              {prompt.tags.length > 0 ? (
+                prompt.tags.map((tag) => (
+                  <span key={tag} className="tag-chip">
+                    {tag}
+                  </span>
+                ))
+              ) : (
+                <span className="text-muted">Aucun tag</span>
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted">Modèle</dt>
+            <dd className="mt-2">
+              <span className="badge">{prompt.model || 'Non renseigné'}</span>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted">Note</dt>
+            <dd className="mt-2 font-medium text-accent" aria-label={`Note ${prompt.rating} sur 5`}>
+              ★ {prompt.rating}/5
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted">Créé le</dt>
+            <dd className="mt-2 font-medium text-ink">
+              <time dateTime={prompt.createdAt}>{formatDate(prompt.createdAt)}</time>
+            </dd>
+          </div>
+        </dl>
       </div>
-      <button type="button" onClick={onCopy} className="button-primary mt-6">
-        Copier le prompt
-      </button>
+
+      <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-control border border-border bg-surface-2 p-4 text-sm">
+        <span className="font-medium text-ink">
+          Usage : <strong className="text-accent">{prompt.copyCount}</strong> copie
+          {prompt.copyCount === 1 ? '' : 's'}
+        </span>
+        <span className="text-muted">
+          Mis à jour le{' '}
+          <time dateTime={prompt.updatedAt}>{formatDate(prompt.updatedAt, true)}</time>
+        </span>
+      </div>
+
+      <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-border pt-6">
+        <button type="button" onClick={onEdit} className="button-secondary">
+          Éditer
+        </button>
+        <button type="button" onClick={onDuplicate} className="button-secondary">
+          Dupliquer
+        </button>
+        <button type="button" onClick={handleDelete} className="button-quiet text-danger">
+          Supprimer
+        </button>
+      </div>
     </section>
   );
 }
