@@ -1,12 +1,14 @@
 import type { Prompt } from '../domain/types';
 import { detectVaguePrompt } from '../domain/vagueDetection';
 import { FavoriteButton } from './FavoriteButton';
+import { HighlightedText } from './HighlightedText';
 
 interface PromptCardProps {
   prompt: Prompt;
   onOpen: () => void;
   onCopy: () => void;
   onToggleFavorite: () => void;
+  query: string;
 }
 
 function VagueBadge({ prompt }: { prompt: Prompt }) {
@@ -17,40 +19,43 @@ function VagueBadge({ prompt }: { prompt: Prompt }) {
   }
 
   return (
-    <span
-      className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900"
-      title={detection.suggestion}
-    >
+    <span className="tag-chip bg-yellow-100 text-yellow-900" title={detection.suggestion}>
       À préciser
     </span>
   );
 }
 
-export function PromptCard({ prompt, onOpen, onCopy, onToggleFavorite }: PromptCardProps) {
+export function PromptCard({ prompt, onOpen, onCopy, onToggleFavorite, query }: PromptCardProps) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <article className="prompt-card">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <button
           type="button"
           onClick={onOpen}
           aria-label={`Ouvrir ${prompt.title}`}
-          className="text-left"
+          className="min-w-0 flex-1 text-left"
         >
-          <h3 className="text-lg font-semibold text-slate-950">{prompt.title}</h3>
-          <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">
-            {prompt.body}
+          <h3 className="text-base font-semibold leading-6 text-zinc-950">
+            <HighlightedText text={prompt.title} query={query} />
+          </h3>
+          <p className="prompt-excerpt mt-2">
+            <HighlightedText text={prompt.body} query={query} />
           </p>
         </button>
         <VagueBadge prompt={prompt} />
       </div>
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         {prompt.tags.map((tag) => (
-          <span key={tag} className="rounded-full bg-indigo-50 px-2.5 py-1 text-indigo-700">
+          <span key={tag} className="tag-chip">
             {tag}
           </span>
         ))}
-        {prompt.model && <span>{prompt.model}</span>}
-        <span aria-label={`Note ${prompt.rating} sur 5`}>★ {prompt.rating}/5</span>
+        {prompt.model && <span className="text-xs font-medium text-zinc-600">{prompt.model}</span>}
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-zinc-200 pt-3 text-sm text-zinc-600">
+        <span aria-label={`Note ${prompt.rating} sur 5`} className="font-semibold text-amber-700">
+          ★ {prompt.rating}/5
+        </span>
         <span aria-label={`${prompt.copyCount} copies`}>
           {prompt.copyCount} copie{prompt.copyCount === 1 ? '' : 's'}
         </span>
@@ -62,7 +67,7 @@ export function PromptCard({ prompt, onOpen, onCopy, onToggleFavorite }: PromptC
         <button
           type="button"
           onClick={onCopy}
-          className="ml-auto rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          className="button-secondary ml-auto min-h-9 px-3 py-1 text-xs"
         >
           Copier
         </button>

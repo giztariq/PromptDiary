@@ -101,25 +101,15 @@ function PromptLibrary({
     <section aria-labelledby="library-heading" className="mt-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600">
-            Bibliothèque
-          </p>
-          <h2 id="library-heading" className="mt-2 text-2xl font-bold tracking-tight">
+          <p className="eyebrow">Bibliothèque</p>
+          <h2 id="library-heading" className="mt-2 text-2xl font-semibold tracking-tight">
             Vos prompts
           </h2>
         </div>
-        <button
-          type="button"
-          onClick={onCreate}
-          className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
-        >
+        <button type="button" onClick={onCreate} aria-keyshortcuts="n" className="button-primary">
           Nouveau prompt
         </button>
-        <button
-          type="button"
-          onClick={onSettings}
-          className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-        >
+        <button type="button" onClick={onSettings} className="button-secondary">
           Réglages
         </button>
       </div>
@@ -135,31 +125,29 @@ function PromptLibrary({
       />
 
       {prompts.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
+        <div className="state-card">
           {hasPrompts ? (
             <>
-              <h3 className="text-lg font-semibold">Aucun résultat</h3>
-              <p className="mt-2 text-sm text-slate-600">
-                Modifiez votre recherche ou vos filtres.
-              </p>
+              <h3 className="text-base font-semibold">Aucun résultat</h3>
+              <p className="mt-2 text-sm text-zinc-600">Modifiez votre recherche ou vos filtres.</p>
               <button
                 type="button"
                 onClick={onClearFilters}
-                className="mt-5 rounded-xl border border-indigo-200 px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
+                className="button-secondary mt-4 border-indigo-200 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50"
               >
                 Réinitialiser les filtres
               </button>
             </>
           ) : (
             <>
-              <h3 className="text-lg font-semibold">Aucun prompt enregistré</h3>
-              <p className="mt-2 text-sm text-slate-600">
+              <h3 className="text-base font-semibold">Aucun prompt enregistré</h3>
+              <p className="mt-2 text-sm text-zinc-600">
                 Créez votre premier prompt pour commencer votre bibliothèque locale.
               </p>
               <button
                 type="button"
                 onClick={onCreate}
-                className="mt-5 rounded-xl border border-indigo-200 px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
+                className="button-secondary mt-4 border-indigo-200 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50"
               >
                 Créer un prompt
               </button>
@@ -175,6 +163,7 @@ function PromptLibrary({
               onOpen={() => onOpen(prompt)}
               onCopy={() => onCopy(prompt)}
               onToggleFavorite={() => onToggleFavorite(prompt)}
+              query={query}
             />
           ))}
         </div>
@@ -209,21 +198,21 @@ function PromptEditor({
   return (
     <section
       aria-labelledby="editor-heading"
-      className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+      aria-busy={saving}
+      className="surface-card mt-10 p-6 sm:p-8"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600">
-            Éditeur
-          </p>
-          <h2 id="editor-heading" className="mt-2 text-2xl font-bold tracking-tight">
+          <p className="eyebrow">Éditeur</p>
+          <h2 id="editor-heading" className="mt-2 text-2xl font-semibold tracking-tight">
             Nouveau prompt
           </h2>
         </div>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          aria-keyshortcuts="Escape"
+          className="button-secondary"
         >
           Annuler
         </button>
@@ -238,7 +227,7 @@ function PromptEditor({
         noValidate
       >
         <div>
-          <label htmlFor="prompt-title" className="text-sm font-semibold text-slate-800">
+          <label htmlFor="prompt-title" className="text-sm font-semibold text-zinc-800">
             Titre
           </label>
           <input
@@ -247,7 +236,7 @@ function PromptEditor({
             onChange={(event) => onChange('title', event.target.value)}
             aria-invalid={Boolean(errors.title)}
             aria-describedby={errors.title ? 'prompt-title-error' : undefined}
-            className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm"
+            className="form-input mt-2"
           />
           {errors.title && (
             <p id="prompt-title-error" className="mt-1 text-sm text-red-700">
@@ -257,7 +246,7 @@ function PromptEditor({
         </div>
 
         <div>
-          <label htmlFor="prompt-body" className="text-sm font-semibold text-slate-800">
+          <label htmlFor="prompt-body" className="text-sm font-semibold text-zinc-800">
             Corps du prompt
           </label>
           <textarea
@@ -267,7 +256,7 @@ function PromptEditor({
             aria-invalid={Boolean(errors.body)}
             aria-describedby={errors.body ? 'prompt-body-error' : undefined}
             rows={7}
-            className="mt-2 w-full resize-y rounded-xl border border-slate-300 px-3 py-2.5 text-sm leading-6 shadow-sm"
+            className="form-textarea mt-2"
           />
           {errors.body && (
             <p id="prompt-body-error" className="mt-1 text-sm text-red-700">
@@ -278,7 +267,7 @@ function PromptEditor({
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label htmlFor="prompt-tags" className="text-sm font-semibold text-slate-800">
+            <label htmlFor="prompt-tags" className="text-sm font-semibold text-zinc-800">
               Tags
             </label>
             <input
@@ -286,12 +275,12 @@ function PromptEditor({
               value={tagsValue}
               onChange={(event) => onChange('tags', event.target.value)}
               placeholder="analyse, synthèse"
-              className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm"
+              className="form-input mt-2"
             />
-            <p className="mt-1 text-xs text-slate-500">Séparez les tags par des virgules.</p>
+            <p className="mt-1 text-xs text-zinc-600">Séparez les tags par des virgules.</p>
           </div>
           <div>
-            <label htmlFor="prompt-model" className="text-sm font-semibold text-slate-800">
+            <label htmlFor="prompt-model" className="text-sm font-semibold text-zinc-800">
               Modèle
             </label>
             <input
@@ -299,13 +288,13 @@ function PromptEditor({
               value={draft.model}
               onChange={(event) => onChange('model', event.target.value)}
               placeholder="GPT, Claude…"
-              className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm"
+              className="form-input mt-2"
             />
           </div>
         </div>
 
         <div>
-          <label htmlFor="prompt-context" className="text-sm font-semibold text-slate-800">
+          <label htmlFor="prompt-context" className="text-sm font-semibold text-zinc-800">
             Contexte
           </label>
           <textarea
@@ -314,12 +303,12 @@ function PromptEditor({
             onChange={(event) => onChange('context', event.target.value)}
             rows={3}
             placeholder="À quoi sert ce prompt ?"
-            className="mt-2 w-full resize-y rounded-xl border border-slate-300 px-3 py-2.5 text-sm leading-6 shadow-sm"
+            className="form-textarea mt-2"
           />
         </div>
 
         <div>
-          <label htmlFor="prompt-rating" className="text-sm font-semibold text-slate-800">
+          <label htmlFor="prompt-rating" className="text-sm font-semibold text-zinc-800">
             Note
           </label>
           <select
@@ -328,7 +317,7 @@ function PromptEditor({
             onChange={(event) => onChange('rating', Number(event.target.value))}
             aria-invalid={Boolean(errors.rating)}
             aria-describedby={errors.rating ? 'prompt-rating-error' : undefined}
-            className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm sm:max-w-xs"
+            className="form-select mt-2 sm:max-w-xs"
           >
             <option value={0}>Choisir une note</option>
             {[1, 2, 3, 4, 5].map((rating) => (
@@ -344,20 +333,18 @@ function PromptEditor({
           )}
         </div>
 
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4" aria-live="polite">
+        <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4" aria-live="polite">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold text-slate-900">Aperçu</span>
+            <span className="text-sm font-semibold text-zinc-950">Aperçu</span>
             {detection.vague ? (
-              <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">
-                À préciser
-              </span>
+              <span className="tag-chip bg-yellow-100 text-yellow-900">À préciser</span>
             ) : (
-              <span className="text-sm font-medium text-emerald-700">
-                Prompt suffisamment précis
-              </span>
+              <span className="text-sm font-medium text-green-700">Prompt suffisamment précis</span>
             )}
           </div>
-          {detection.vague && <p className="mt-2 text-sm text-amber-900">{detection.suggestion}</p>}
+          {detection.vague && (
+            <p className="mt-2 text-sm text-yellow-900">{detection.suggestion}</p>
+          )}
         </div>
 
         {saveError && (
@@ -368,7 +355,7 @@ function PromptEditor({
         <button
           type="submit"
           disabled={saving}
-          className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60"
+          className="button-primary w-full disabled:opacity-60"
         >
           {saving ? 'Enregistrement…' : 'Enregistrer le prompt'}
         </button>
@@ -380,6 +367,7 @@ function PromptEditor({
 export default function App({ storage = defaultStorage }: AppProps) {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [status, setStatus] = useState<LibraryStatus>('loading');
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [view, setView] = useState<'library' | 'editor' | 'detail' | 'settings'>('library');
   const [selectedPromptId, setSelectedPromptId] = useState<string>();
   const [query, setQuery] = useState('');
@@ -425,7 +413,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
     return () => {
       active = false;
     };
-  }, [storage]);
+  }, [loadAttempt, storage]);
 
   useEffect(() => {
     function handleShortcut(event: KeyboardEvent) {
@@ -433,17 +421,31 @@ export default function App({ storage = defaultStorage }: AppProps) {
       const tagName = target?.tagName;
       const isTyping = tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT';
 
-      if (event.key.toLowerCase() === 'n' && !event.metaKey && !event.ctrlKey && !isTyping) {
+      if (event.key === 'Escape' && view === 'editor') {
         event.preventDefault();
-        if (status === 'ready') {
-          openEditor();
-        }
+        setView('library');
+        return;
+      }
+
+      if (event.metaKey || event.ctrlKey || event.altKey || isTyping) {
+        return;
+      }
+
+      if (event.key === '/' && status === 'ready' && view === 'library') {
+        event.preventDefault();
+        document.getElementById('prompt-search')?.focus();
+        return;
+      }
+
+      if (event.key.toLowerCase() === 'n' && status === 'ready') {
+        event.preventDefault();
+        openEditor();
       }
     }
 
     window.addEventListener('keydown', handleShortcut);
     return () => window.removeEventListener('keydown', handleShortcut);
-  }, [status]);
+  }, [status, view]);
 
   function openEditor() {
     setDraft(emptyDraft);
@@ -552,32 +554,43 @@ export default function App({ storage = defaultStorage }: AppProps) {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900 sm:py-14">
-      <section className="mx-auto max-w-4xl">
+    <main className="app-shell">
+      <section className="page-shell">
         <header>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600">
-            Local-first prompt journal
-          </p>
-          <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Prompt Diary</h1>
-          <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
+          <p className="eyebrow">Local-first prompt journal</p>
+          <h1 className="mt-3 text-[32px] font-semibold leading-10 tracking-tight sm:text-[32px]">
+            Prompt Diary
+          </h1>
+          <p className="mt-4 max-w-2xl text-base leading-6 text-zinc-600 sm:text-lg sm:leading-7">
             Gardez vos prompts utiles, notez ce qui fonctionne et retrouvez-les en quelques
             secondes.
           </p>
         </header>
 
         {status === 'loading' && (
-          <p
+          <div
             role="status"
             aria-label="Chargement des prompts…"
-            className="mt-10 rounded-2xl bg-white p-6 text-sm text-slate-600 shadow-sm"
+            className="surface-card mt-10 space-y-4 p-6"
           >
-            Chargement des prompts…
-          </p>
+            <span className="sr-only">Chargement des prompts…</span>
+            <div className="skeleton w-1/3" aria-hidden="true" />
+            <div className="skeleton w-5/6" aria-hidden="true" />
+            <div className="skeleton w-2/3" aria-hidden="true" />
+          </div>
         )}
         {status === 'error' && (
-          <p role="alert" className="mt-10 rounded-2xl bg-red-50 p-6 text-sm text-red-800">
-            Impossible de charger les prompts.
-          </p>
+          <div role="alert" className="state-card error-state p-6 text-left">
+            <p className="text-sm font-semibold">Impossible de charger les prompts.</p>
+            <p className="mt-2 text-sm leading-6">Vérifiez le stockage local puis réessayez.</p>
+            <button
+              type="button"
+              onClick={() => setLoadAttempt((attempt) => attempt + 1)}
+              className="button-secondary mt-4 border-red-200 bg-white text-red-800 hover:border-red-300 hover:bg-red-50"
+            >
+              Réessayer
+            </button>
+          </div>
         )}
         {status === 'ready' && view === 'library' && (
           <PromptLibrary
@@ -626,6 +639,21 @@ export default function App({ storage = defaultStorage }: AppProps) {
             onToggleFavorite={() => void changeFavorite(selectedPrompt)}
           />
         )}
+        {status === 'ready' && view === 'detail' && !selectedPrompt && (
+          <div role="alert" className="state-card error-state text-left">
+            <h2 className="text-base font-semibold">Prompt introuvable</h2>
+            <p className="mt-2 text-sm leading-6">
+              Ce prompt n’est plus disponible dans la bibliothèque.
+            </p>
+            <button
+              type="button"
+              onClick={() => setView('library')}
+              className="button-secondary mt-4"
+            >
+              Retour à la bibliothèque
+            </button>
+          </div>
+        )}
         {status === 'ready' && view === 'editor' && (
           <PromptEditor
             draft={draft}
@@ -639,7 +667,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
           />
         )}
       </section>
-      <footer className="mx-auto mt-10 max-w-4xl border-t border-slate-200 pt-5 text-center text-sm text-slate-500">
+      <footer className="mx-auto max-w-[1024px] border-t border-zinc-200 px-6 pt-5 text-center text-sm text-zinc-600 sm:px-0">
         Tout est local, rien ne part sur un serveur.
       </footer>
       <Toast message={toast} />

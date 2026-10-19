@@ -11,7 +11,7 @@ export function FavoriteButton({ favorite, promptTitle, onClick }: FavoriteButto
       onClick={onClick}
       aria-pressed={favorite}
       aria-label={`${favorite ? 'Retirer' : 'Ajouter'} ${promptTitle} aux favoris`}
-      className="rounded-lg px-2 py-1 text-base text-amber-700 hover:bg-amber-50"
+      className="button-quiet min-h-9 px-2 py-1 text-base text-amber-700"
     >
       {favorite ? '★' : '☆'}
     </button>

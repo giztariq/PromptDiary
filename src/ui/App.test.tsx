@@ -17,6 +17,7 @@ describe('Prompt Diary prompt library', () => {
   });
 
   it('renders prompts already stored in the injected adapter', async () => {
+    const user = userEvent.setup();
     const storedPrompt: Prompt = {
       id: 'prompt-1',
       title: 'Synthèse de réunion',
@@ -35,6 +36,10 @@ describe('Prompt Diary prompt library', () => {
 
     expect(await screen.findByRole('heading', { name: 'Synthèse de réunion' })).toBeVisible();
     expect(screen.getByText('réunion')).toBeVisible();
+
+    const search = screen.getByRole('searchbox', { name: 'Rechercher dans les prompts' });
+    await user.type(search, 'synthèse');
+    expect(screen.getByText('Synthèse', { selector: 'mark' })).toBeVisible();
   });
 
   it('shows an error when loading the library fails', async () => {
@@ -51,6 +56,7 @@ describe('Prompt Diary prompt library', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Impossible de charger les prompts.',
     );
+    expect(screen.getByRole('button', { name: 'Réessayer' })).toBeVisible();
   });
 
   it('creates a prompt, persists it, and displays the vague badge', async () => {
@@ -207,6 +213,20 @@ describe('Prompt Diary prompt library', () => {
     await user.keyboard('n');
 
     expect(screen.getByRole('heading', { name: 'Nouveau prompt' })).toBeVisible();
+  });
+
+  it('focuses search with slash and closes the editor with Escape', async () => {
+    const user = userEvent.setup();
+    render(<App storage={createMemoryAdapter()} />);
+
+    await screen.findByText('Aucun prompt enregistré');
+    await user.keyboard('/');
+    expect(screen.getByRole('searchbox', { name: 'Rechercher dans les prompts' })).toHaveFocus();
+
+    await user.click(screen.getByRole('button', { name: 'Nouveau prompt' }));
+    expect(screen.getByRole('heading', { name: 'Nouveau prompt' })).toBeVisible();
+    await user.keyboard('{Escape}');
+    expect(screen.getByText('Aucun prompt enregistré')).toBeVisible();
   });
 
   it('exports a versioned JSON file from settings', async () => {
