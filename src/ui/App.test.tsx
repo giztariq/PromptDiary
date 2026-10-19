@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import type { Prompt } from '../domain/types';
+import { exportPrompts } from '../domain/importExport';
 import { createMemoryAdapter } from '../storage/memoryAdapter';
 import type { StorageAdapter } from '../storage/storageAdapter';
 import App from './App';
@@ -206,5 +207,71 @@ describe('Prompt Diary prompt library', () => {
     await user.keyboard('n');
 
     expect(screen.getByRole('heading', { name: 'Nouveau prompt' })).toBeVisible();
+  });
+
+  it('exports a versioned JSON file from settings', async () => {
+    const user = userEvent.setup();
+    const prompt: Prompt = {
+      id: 'exported',
+      title: 'Exporté',
+      body: 'Corps exporté.',
+      tags: [],
+      model: '',
+      context: '',
+      rating: 5,
+      favorite: false,
+      copyCount: 0,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+    };
+    const createObjectURL = vi.fn().mockReturnValue('blob:prompt-diary');
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+
+    render(<App storage={createMemoryAdapter([prompt])} />);
+    await screen.findByRole('heading', { name: 'Exporté' });
+    await user.click(screen.getByRole('button', { name: 'Réglages' }));
+    await user.click(screen.getByRole('button', { name: 'Exporter la bibliothèque' }));
+
+    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+    expect(exportPrompts([prompt])).toContain('"version": 1');
+    expect(click).toHaveBeenCalled();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:prompt-diary');
+    vi.unstubAllGlobals();
+    click.mockRestore();
+  });
+
+  it('imports a JSON library and reports added and ignored prompts', async () => {
+    const user = userEvent.setup();
+    const existing: Prompt = {
+      id: 'existing',
+      title: 'Existant',
+      body: 'Déjà là.',
+      tags: [],
+      model: '',
+      context: '',
+      rating: 3,
+      favorite: false,
+      copyCount: 0,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+    };
+    const added = { ...existing, id: 'added', title: 'Ajouté' };
+    const adapter = createMemoryAdapter([existing]);
+
+    render(<App storage={adapter} />);
+    await screen.findByRole('heading', { name: 'Existant' });
+    await user.click(screen.getByRole('button', { name: 'Réglages' }));
+    const file = new File([exportPrompts([existing, added])], 'prompts.json', {
+      type: 'application/json',
+    });
+    await user.upload(screen.getByLabelText('Importer une bibliothèque JSON'), file);
+
+    expect(await screen.findByRole('status')).toHaveTextContent('1 ajoutés / 1 ignorés');
+    await expect(adapter.list()).resolves.toHaveLength(2);
+    expect(screen.getByRole('heading', { name: 'Ajouté' })).toBeVisible();
   });
 });

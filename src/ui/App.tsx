@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { createPromptFromDraft } from '../domain/promptCreation';
 import { incrementCopyCount, toggleFavorite } from '../domain/promptActions';
+import { exportPrompts, mergePromptLibrary, parsePromptExport } from '../domain/importExport';
 import { searchPrompts } from '../domain/search';
 import {
   validatePromptDraft,
@@ -15,6 +16,7 @@ import type { StorageAdapter } from '../storage/storageAdapter';
 import { PromptCard } from './PromptCard';
 import { PromptDetail } from './PromptDetail';
 import { PromptSearch } from './PromptSearch';
+import { Settings } from './Settings';
 import { Toast } from './Toast';
 
 interface AppProps {
@@ -45,9 +47,25 @@ function createId(): string {
   return crypto.randomUUID();
 }
 
+function readFileText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Unable to read file'));
+      }
+    };
+    reader.onerror = () => reject(reader.error ?? new Error('Unable to read file'));
+    reader.readAsText(file);
+  });
+}
+
 interface PromptLibraryProps {
   prompts: Prompt[];
   onCreate: () => void;
+  onSettings: () => void;
   query: string;
   onQueryChange: (query: string) => void;
   tags: string[];
@@ -63,6 +81,7 @@ interface PromptLibraryProps {
 function PromptLibrary({
   prompts,
   onCreate,
+  onSettings,
   query,
   onQueryChange,
   tags,
@@ -91,6 +110,13 @@ function PromptLibrary({
           className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
         >
           Nouveau prompt
+        </button>
+        <button
+          type="button"
+          onClick={onSettings}
+          className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          Réglages
         </button>
       </div>
 
@@ -332,7 +358,7 @@ function PromptEditor({
 export default function App({ storage = defaultStorage }: AppProps) {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [status, setStatus] = useState<LibraryStatus>('loading');
-  const [view, setView] = useState<'library' | 'editor' | 'detail'>('library');
+  const [view, setView] = useState<'library' | 'editor' | 'detail' | 'settings'>('library');
   const [selectedPromptId, setSelectedPromptId] = useState<string>();
   const [query, setQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -406,6 +432,11 @@ export default function App({ storage = defaultStorage }: AppProps) {
     setView('editor');
   }
 
+  function openSettings() {
+    setSelectedPromptId(undefined);
+    setView('settings');
+  }
+
   function updateDraft(field: keyof PromptDraft, value: string | number) {
     if (field === 'tags' && typeof value === 'string') {
       setTagsValue(value);
@@ -472,6 +503,32 @@ export default function App({ storage = defaultStorage }: AppProps) {
     }
   }
 
+  function exportLibrary() {
+    const blob = new Blob([exportPrompts(prompts)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'prompt-diary-export.json';
+    link.click();
+    URL.revokeObjectURL(url);
+    setToast('Bibliothèque exportée');
+  }
+
+  async function importLibrary(file: File) {
+    try {
+      const imported = parsePromptExport(await readFileText(file));
+      const report = mergePromptLibrary(prompts, imported);
+      for (const prompt of report.addedPrompts) {
+        await storage.save(prompt);
+      }
+      setPrompts(report.prompts);
+      setView('library');
+      setToast(`${report.added} ajoutés / ${report.ignored} ignorés`);
+    } catch {
+      setToast('Import invalide : choisissez un export Prompt Diary.');
+    }
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900 sm:py-14">
       <section className="mx-auto max-w-4xl">
@@ -504,6 +561,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
           <PromptLibrary
             prompts={visiblePrompts}
             onCreate={openEditor}
+            onSettings={openSettings}
             query={query}
             onQueryChange={setQuery}
             tags={tags}
@@ -523,6 +581,13 @@ export default function App({ storage = defaultStorage }: AppProps) {
             }}
             onCopy={(prompt) => void copyPrompt(prompt)}
             onToggleFavorite={(prompt) => void changeFavorite(prompt)}
+          />
+        )}
+        {status === 'ready' && view === 'settings' && (
+          <Settings
+            onBack={() => setView('library')}
+            onExport={exportLibrary}
+            onImport={importLibrary}
           />
         )}
         {status === 'ready' && view === 'detail' && selectedPrompt && (
