@@ -27,6 +27,17 @@ describe('memory storage adapter', () => {
     expect(await adapter.get(prompt.id)).toEqual(prompt);
   });
 
+  it('clones initial prompts and list results', async () => {
+    const initialPrompt = { ...prompt, tags: ['analyse', 'documents'] };
+    const adapter = createMemoryAdapter([initialPrompt]);
+
+    initialPrompt.tags.push('mutated outside the adapter');
+    const listed = await adapter.list();
+    listed[0].tags.push('mutated from the list');
+
+    expect(await adapter.list()).toEqual([{ ...prompt, tags: ['analyse', 'documents'] }]);
+  });
+
   it('updates, lists, and removes prompts', async () => {
     const adapter = createMemoryAdapter([prompt]);
     const updated = { ...prompt, favorite: true, copyCount: 3 };
@@ -36,6 +47,7 @@ describe('memory storage adapter', () => {
     expect(await adapter.list()).toEqual([updated]);
     await adapter.remove(prompt.id);
     expect(await adapter.get(prompt.id)).toBeUndefined();
+    expect(await adapter.get('missing')).toBeUndefined();
     expect(await adapter.list()).toEqual([]);
   });
 

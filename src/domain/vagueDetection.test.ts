@@ -2,30 +2,38 @@ import { detectVaguePrompt } from './vagueDetection';
 
 describe('detectVaguePrompt', () => {
   it.each([
-    { body: 'Résume ce texte.', context: '' },
-    { body: 'Améliore ce contenu.', context: '' },
-    { body: 'Fais mieux.', context: '' },
-  ])('flags a vague prompt: $body', (input) => {
-    expect(detectVaguePrompt(input).vague).toBe(true);
-  });
-
-  it('flags missing context and output format on a longer prompt', () => {
-    const result = detectVaguePrompt({
+    {
+      label: 'instruction courte',
+      body: 'Résume ce texte.',
+      context: '',
+      vague: true,
+    },
+    {
+      label: 'instruction longue sans rôle ni format',
       body: 'Analyse ce document avec attention et explique les idées importantes pour aider à prendre une décision.',
       context: '',
-    });
-
-    expect(result.vague).toBe(true);
-    expect(result.reasons).toHaveLength(2);
-  });
-
-  it('accepts a detailed prompt with a role and a requested format', () => {
-    const result = detectVaguePrompt({
-      body: 'Tu es un analyste senior. Analyse ce document pour une équipe produit et réponds sous forme de tableau avec trois recommandations détaillées.',
-      context: 'Préparer une réunion produit',
-    });
-
-    expect(result).toEqual({ vague: false, reasons: [], suggestion: '' });
+      vague: true,
+    },
+    {
+      label: 'contexte sans format de sortie',
+      body: 'Analyse ce document pour préparer la réunion produit.',
+      context: 'Préparer une décision',
+      vague: true,
+    },
+    {
+      label: 'rôle et format dans le corps',
+      body: 'Tu es un analyste senior. Analyse ce document et réponds sous forme de tableau avec trois recommandations détaillées.',
+      context: '',
+      vague: false,
+    },
+    {
+      label: 'contexte et format explicites',
+      body: 'Analyse ce document pour préparer une décision et réponds sous forme de liste de cinq actions prioritaires.',
+      context: 'Réunion produit',
+      vague: false,
+    },
+  ])('classifies the $label case', ({ body, context, vague }) => {
+    expect(detectVaguePrompt({ body, context }).vague).toBe(vague);
   });
 
   it('returns a useful suggestion when a prompt is vague', () => {

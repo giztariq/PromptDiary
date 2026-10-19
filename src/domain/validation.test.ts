@@ -26,10 +26,29 @@ describe('validatePromptDraft', () => {
     });
   });
 
-  it.each([0, 6, 2.5])('rejects an invalid rating: %s', (rating) => {
-    const result = validatePromptDraft({ ...validDraft, rating });
+  it.each([1, 5])('accepts the rating boundary: %s', (rating) => {
+    expect(validatePromptDraft({ ...validDraft, rating })).toEqual({ valid: true, errors: {} });
+  });
 
-    expect(result.valid).toBe(false);
-    expect(result.errors.rating).toBe('La note doit être un entier entre 1 et 5.');
+  it.each([0, 6, 2.5, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    'rejects an invalid rating: %s',
+    (rating) => {
+      const result = validatePromptDraft({ ...validDraft, rating });
+
+      expect(result.valid).toBe(false);
+      expect(result.errors.rating).toBe('La note doit être un entier entre 1 et 5.');
+    },
+  );
+
+  it('treats whitespace-only fields as empty', () => {
+    const result = validatePromptDraft({ ...validDraft, title: '\t\n', body: '\u00a0' });
+
+    expect(result).toEqual({
+      valid: false,
+      errors: {
+        title: 'Le titre est obligatoire.',
+        body: 'Le corps du prompt est obligatoire.',
+      },
+    });
   });
 });

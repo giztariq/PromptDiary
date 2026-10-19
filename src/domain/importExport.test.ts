@@ -20,6 +20,19 @@ describe('prompt import and export', () => {
     expect(parsePromptExport(exportPrompts([prompt]))).toEqual([prompt]);
   });
 
+  it('round-trips a full library without sharing tag references', () => {
+    const library = [
+      prompt,
+      { ...prompt, id: 'prompt-2', title: 'Réponse client', tags: ['email'] },
+    ];
+
+    const imported = parsePromptExport(exportPrompts(library));
+    expect(imported).toEqual(library);
+    imported[0].tags.push('mutated');
+
+    expect(library[0].tags).toEqual(['analyse']);
+  });
+
   it('merges imported prompts without duplicating ids', () => {
     const imported = [prompt, { ...prompt, id: 'prompt-2', title: 'Nouveau' }];
 
