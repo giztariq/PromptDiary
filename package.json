@@ -2,7 +2,20 @@
   "name": "prompt-diary",
   "private": true,
   "version": "0.1.0",
+  "description": "Journal local-first pour sauvegarder, noter et réutiliser ses meilleurs prompts.",
   "license": "MIT",
+  "author": "C. Tariq",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/giztariq/PromptDiary.git"
+  },
+  "keywords": [
+    "prompts",
+    "local-first",
+    "journal",
+    "react",
+    "indexeddb"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",

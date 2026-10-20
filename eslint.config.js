@@ -21,6 +21,15 @@ export default tseslint.config(
     },
   },
   {
+    files: ['public/sw.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: {
+        ...globals.serviceworker,
+      },
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2022,

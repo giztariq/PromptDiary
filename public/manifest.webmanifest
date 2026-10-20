@@ -1,0 +1,26 @@
+{
+  "name": "Prompt Diary",
+  "short_name": "Prompt Diary",
+  "description": "Journal local de prompts : sauvegardez, notez et réutilisez vos meilleurs prompts, sans compte.",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8f5f0",
+  "theme_color": "#b45309",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

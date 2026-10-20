@@ -5,3 +5,8 @@ coverage
 .env.*
 !.env.example
 *.local
+*.tsbuildinfo
+.agents/
+skills-lock.json
+.DS_Store
+Thumbs.db

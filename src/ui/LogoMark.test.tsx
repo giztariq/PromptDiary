@@ -11,7 +11,7 @@ describe('LogoMark', () => {
       .parseFromString(indexHtml, 'text/html')
       .querySelector<HTMLLinkElement>('link[rel="icon"]')!;
     expect(icon.getAttribute('type')).toBe('image/svg+xml');
-    expect(icon.hasAttribute('href')).toBe(false);
+    expect(icon.getAttribute('href')).toBe('/favicon.svg');
     document.head.append(icon);
     const accent = 'rgb(12, 34, 56)';
     const surface = 'rgb(210, 220, 230)';
