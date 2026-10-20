@@ -33,8 +33,12 @@ describe('prompt import and export', () => {
     expect(library[0].tags).toEqual(['analyse']);
   });
 
-  it('round-trips the optional last-used timestamp', () => {
-    const usedPrompt = { ...prompt, lastUsedAt: '2026-10-20T09:30:00.000Z' };
+  it('round-trips the optional usage history', () => {
+    const usedPrompt = {
+      ...prompt,
+      lastUsedAt: '2026-10-20T09:30:00.000Z',
+      usageLog: ['2026-10-19T09:30:00.000Z', '2026-10-20T09:30:00.000Z'],
+    };
 
     expect(parsePromptExport(exportPrompts([usedPrompt]))).toEqual([usedPrompt]);
   });

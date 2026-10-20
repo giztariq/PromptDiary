@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { createPromptFromDraft } from '../domain/promptCreation';
-import { incrementCopyCount, toggleFavorite } from '../domain/promptActions';
+import { recordUsage, toggleFavorite } from '../domain/promptActions';
 import { exportPrompts, mergePromptLibrary, parsePromptExport } from '../domain/importExport';
 import { importExamples } from '../domain/importExample';
 import { searchPrompts } from '../domain/search';
@@ -566,6 +566,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
           copyCount: existing.copyCount,
           createdAt: existing.createdAt,
           lastUsedAt: existing.lastUsedAt,
+          usageLog: existing.usageLog,
         }
       : prompt;
     setSaving(true);
@@ -600,7 +601,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
   async function copyPrompt(prompt: Prompt) {
     try {
       await copyText(prompt.body, 'Prompt copié');
-      const updated = incrementCopyCount(prompt, new Date().toISOString());
+      const updated = recordUsage(prompt, new Date().toISOString());
       await storage.save(updated);
       setPrompts((currentPrompts) =>
         currentPrompts.map((currentPrompt) =>
@@ -619,12 +620,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
         throw new Error('Clipboard unavailable');
       }
       await navigator.clipboard.writeText(fillVariables(prompt.body, values));
-      const updated: Prompt = {
-        ...prompt,
-        copyCount: prompt.copyCount + 1,
-        lastUsedAt: timestamp,
-        updatedAt: timestamp,
-      };
+      const updated = recordUsage(prompt, timestamp);
       await storage.save(updated);
       await storage.setValue(variableValuesKey(prompt.id), values);
       setPrompts((currentPrompts) =>
@@ -732,6 +728,8 @@ export default function App({ storage = defaultStorage }: AppProps) {
       updatedAt: timestamp,
       tags: [...prompt.tags],
     };
+    delete duplicate.lastUsedAt;
+    delete duplicate.usageLog;
 
     try {
       await storage.save(duplicate);

@@ -13,4 +13,5 @@ export interface Prompt {
   createdAt: string;
   updatedAt: string;
   lastUsedAt?: string;
+  usageLog?: string[];
 }

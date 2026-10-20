@@ -202,8 +202,13 @@ describe('Prompt Diary prompt library', () => {
     await user.click(screen.getByRole('button', { name: 'Copier le prompt' }));
 
     expect(writeText).toHaveBeenCalledWith('Corps complet à copier.');
-    await expect(adapter.get('detail')).resolves.toMatchObject({ copyCount: 5 });
+    await expect(adapter.get('detail')).resolves.toMatchObject({
+      copyCount: 5,
+      usageLog: [expect.any(String)],
+    });
     expect(await screen.findByRole('status')).toHaveTextContent('Prompt copié');
+    expect(screen.getByText('Historique d’utilisation (1)')).toBeVisible();
+    expect(screen.getByText(/Dernière utilisation le/)).toBeVisible();
   });
 
   it('fills a dynamic prompt, persists its values, and restores them when reopened', async () => {
@@ -246,7 +251,11 @@ describe('Prompt Diary prompt library', () => {
     expect(writeText).toHaveBeenCalledWith('Réponds à Acme avec un ton direct.');
     await waitFor(async () => {
       const savedPrompt = await adapter.get('dynamic');
-      expect(savedPrompt).toMatchObject({ copyCount: 1, lastUsedAt: expect.any(String) });
+      expect(savedPrompt).toMatchObject({
+        copyCount: 1,
+        lastUsedAt: expect.any(String),
+        usageLog: [expect.any(String)],
+      });
       expect(savedPrompt?.updatedAt).toBe(savedPrompt?.lastUsedAt);
       await expect(adapter.getValue(variableValuesKey('dynamic'))).resolves.toEqual({
         client: 'Acme',
@@ -439,6 +448,8 @@ describe('Prompt Diary prompt library', () => {
       copyCount: 2,
       createdAt: '2026-10-19T12:00:00.000Z',
       updatedAt: '2026-10-19T12:00:00.000Z',
+      lastUsedAt: '2026-10-19T13:00:00.000Z',
+      usageLog: ['2026-10-19T13:00:00.000Z'],
     };
     const adapter = createMemoryAdapter([prompt]);
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
@@ -452,6 +463,12 @@ describe('Prompt Diary prompt library', () => {
     await user.click(screen.getByRole('button', { name: 'Ouvrir Prompt actions' }));
     await user.click(screen.getByRole('button', { name: 'Dupliquer' }));
     expect(await screen.findByRole('heading', { name: 'Prompt actions (copie)' })).toBeVisible();
+    const duplicate = (await adapter.list()).find((candidate) =>
+      candidate.title.endsWith('(copie)'),
+    );
+    expect(duplicate).toMatchObject({ copyCount: 0 });
+    expect(duplicate?.lastUsedAt).toBeUndefined();
+    expect(duplicate?.usageLog).toBeUndefined();
     await user.click(screen.getByRole('button', { name: 'Supprimer' }));
 
     expect(confirm).toHaveBeenCalled();

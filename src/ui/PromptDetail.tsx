@@ -141,11 +141,35 @@ export function PromptDetail({
           Usage : <strong className="text-accent">{prompt.copyCount}</strong> copie
           {prompt.copyCount === 1 ? '' : 's'}
         </span>
+        {prompt.lastUsedAt && (
+          <span className="text-muted">
+            Dernière utilisation le{' '}
+            <time dateTime={prompt.lastUsedAt}>{formatDate(prompt.lastUsedAt, true)}</time>
+          </span>
+        )}
         <span className="text-muted">
           Mis à jour le{' '}
           <time dateTime={prompt.updatedAt}>{formatDate(prompt.updatedAt, true)}</time>
         </span>
       </div>
+
+      {prompt.usageLog && prompt.usageLog.length > 0 && (
+        <details className="mt-4 rounded-control border border-border p-4 text-sm">
+          <summary className="cursor-pointer font-medium text-ink">
+            Historique d’utilisation ({prompt.usageLog.length})
+          </summary>
+          <ol className="mt-3 grid gap-1 text-muted">
+            {prompt.usageLog
+              .slice(-5)
+              .reverse()
+              .map((timestamp, index) => (
+                <li key={`${timestamp}-${index}`}>
+                  <time dateTime={timestamp}>{formatDate(timestamp, true)}</time>
+                </li>
+              ))}
+          </ol>
+        </details>
+      )}
 
       <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-border pt-6">
         <button type="button" onClick={onEdit} className="button-secondary">
