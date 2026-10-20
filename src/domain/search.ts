@@ -19,7 +19,9 @@ function matchesQuery(prompt: Prompt, query: string): boolean {
     return true;
   }
 
-  const searchableText = normalize(`${prompt.title} ${prompt.body}`);
+  const searchableText = normalize(
+    [prompt.title, prompt.body, prompt.model, prompt.context, ...prompt.tags].join(' '),
+  );
   return searchableText.includes(query);
 }
 

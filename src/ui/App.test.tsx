@@ -524,7 +524,7 @@ describe('Prompt Diary prompt library', () => {
     expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
     expect(exportPrompts([prompt])).toContain('"version": 1');
     expect(click).toHaveBeenCalled();
-    expect(revokeObjectURL).toHaveBeenCalledWith('blob:prompt-diary');
+    await waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith('blob:prompt-diary'));
     vi.unstubAllGlobals();
     click.mockRestore();
   });
@@ -558,6 +558,87 @@ describe('Prompt Diary prompt library', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('1 ajoutés / 1 ignorés');
     await expect(adapter.list()).resolves.toHaveLength(2);
     expect(screen.getByRole('heading', { name: 'Ajouté' })).toBeVisible();
+  });
+
+  it('reloads the real storage state when an import fails halfway through', async () => {
+    const user = userEvent.setup();
+    const baseAdapter = createMemoryAdapter();
+    let saveCount = 0;
+    const adapter: StorageAdapter = {
+      ...baseAdapter,
+      save: async (prompt) => {
+        saveCount += 1;
+        if (saveCount === 2) {
+          throw new Error('quota exceeded');
+        }
+        return baseAdapter.save(prompt);
+      },
+    };
+    const first: Prompt = {
+      id: 'first',
+      title: 'Premier importé',
+      body: 'Premier corps.',
+      tags: [],
+      model: '',
+      context: '',
+      rating: 3,
+      favorite: false,
+      copyCount: 0,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+    };
+    const second = { ...first, id: 'second', title: 'Second importé' };
+
+    render(<App storage={adapter} />);
+    await screen.findByText('Aucun prompt enregistré');
+    await user.click(screen.getByRole('button', { name: 'Réglages' }));
+    const file = new File([exportPrompts([first, second])], 'partial.json', {
+      type: 'application/json',
+    });
+    await user.upload(screen.getByLabelText('Importer une bibliothèque JSON'), file);
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Import interrompu');
+    await expect(adapter.list()).resolves.toHaveLength(1);
+    expect(await screen.findByRole('heading', { name: 'Premier importé' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Second importé' })).not.toBeInTheDocument();
+  });
+
+  it('recovers from a storage load error by resetting local data', async () => {
+    const user = userEvent.setup();
+    const prompt: Prompt = {
+      id: 'unreadable',
+      title: 'Illisible',
+      body: 'Corps.',
+      tags: [],
+      model: '',
+      context: '',
+      rating: 3,
+      favorite: false,
+      copyCount: 0,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+    };
+    const baseAdapter = createMemoryAdapter([prompt]);
+    const adapter: StorageAdapter = {
+      ...baseAdapter,
+      list: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('corrupted database'))
+        .mockImplementation(() => baseAdapter.list()),
+    };
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    render(<App storage={adapter} />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Impossible de charger les prompts.',
+    );
+    await user.click(screen.getByRole('button', { name: 'Réinitialiser le stockage local' }));
+
+    expect(confirm).toHaveBeenCalled();
+    expect(await screen.findByText('Aucun prompt enregistré')).toBeVisible();
+    await expect(adapter.list()).resolves.toEqual([]);
+    confirm.mockRestore();
   });
 
   it('clears the library from settings after confirmation', async () => {

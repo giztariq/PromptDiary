@@ -56,6 +56,18 @@ describe('searchPrompts', () => {
     ]);
   });
 
+  it('searches tags, model, and context as well as title and body', () => {
+    expect(searchPrompts(prompts, { query: 'claude' }).map((prompt) => prompt.id)).toEqual([
+      'analysis',
+    ]);
+    expect(searchPrompts(prompts, { query: 'synthese' }).map((prompt) => prompt.id)).toEqual([
+      'analysis',
+    ]);
+    expect(searchPrompts(prompts, { query: 'strategie' }).map((prompt) => prompt.id)).toEqual([
+      'strategy',
+    ]);
+  });
+
   it('combines text, tag, and minimum rating filters', () => {
     expect(
       searchPrompts(prompts, { query: 'document', tags: ['analyse'], minRating: 5 }).map(

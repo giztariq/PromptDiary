@@ -10,7 +10,7 @@ export function createPromptFromDraft(draft: PromptDraft, id: string, timestamp:
     id,
     title: draft.title.trim(),
     body: draft.body.trim(),
-    tags: draft.tags.map((tag) => tag.trim()).filter(Boolean),
+    tags: [...new Set(draft.tags.map((tag) => tag.trim()).filter(Boolean))],
     model: draft.model.trim(),
     context: draft.context.trim(),
     rating: draft.rating,

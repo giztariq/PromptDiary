@@ -692,35 +692,91 @@ export default function App({ storage = defaultStorage }: AppProps) {
     link.href = url;
     link.download = 'prompt-diary-export.json';
     link.click();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
     showToast('Bibliothèque exportée');
   }
 
-  async function importLibrary(file: File) {
+  async function addPromptsWithRecovery(
+    promptsToAdd: Prompt[],
+    failureMessage: string,
+  ): Promise<boolean> {
     try {
-      const imported = parsePromptExport(await readFileText(file));
-      const report = mergePromptLibrary(prompts, imported);
-      for (const prompt of report.addedPrompts) {
+      for (const prompt of promptsToAdd) {
         await storage.save(prompt);
       }
-      setPrompts(report.prompts);
-      setView('library');
-      showToast(`${report.added} ajoutés / ${report.ignored} ignorés`);
+      return true;
     } catch {
-      showToast('Import invalide : choisissez un export Prompt Diary.');
+      try {
+        setPrompts(await storage.list());
+      } catch {
+        showToast(`${failureMessage} Rechargez la page pour voir l’état réel.`);
+        return false;
+      }
+      showToast(failureMessage);
+      return false;
     }
   }
 
-  async function importExamplePrompts(examples: Example[]) {
+  async function importLibrary(file: File) {
+    let imported: Prompt[];
+
     try {
-      const report = importExamples(examples, prompts);
-      for (const prompt of report.ajoutes) {
-        await storage.save(prompt);
-      }
-      setPrompts((currentPrompts) => [...currentPrompts, ...report.ajoutes]);
-      showToast(`${report.ajoutes.length} ajoutés, ${report.ignores} déjà présents`);
+      imported = parsePromptExport(await readFileText(file));
     } catch {
-      showToast('Impossible d’ajouter les exemples.');
+      showToast('Import invalide : choisissez un export Prompt Diary.');
+      return;
+    }
+
+    const report = mergePromptLibrary(prompts, imported);
+    const complete = await addPromptsWithRecovery(
+      report.addedPrompts,
+      'Import interrompu : certains prompts n’ont pas pu être enregistrés.',
+    );
+
+    if (!complete) {
+      setView('library');
+      return;
+    }
+
+    setPrompts(report.prompts);
+    setStatus('ready');
+    setView('library');
+    showToast(`${report.added} ajoutés / ${report.ignored} ignorés`);
+  }
+
+  async function importExamplePrompts(examples: Example[]) {
+    const report = importExamples(examples, prompts);
+    const complete = await addPromptsWithRecovery(
+      report.ajoutes,
+      'Ajout interrompu : certains exemples n’ont pas pu être enregistrés.',
+    );
+
+    if (!complete) {
+      return;
+    }
+
+    setPrompts((currentPrompts) => [...currentPrompts, ...report.ajoutes]);
+    showToast(`${report.ajoutes.length} ajoutés, ${report.ignores} déjà présents`);
+  }
+
+  async function resetStorage() {
+    if (
+      !window.confirm(
+        'Effacer toutes les données locales de Prompt Diary ? Cette action est irréversible.',
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await storage.clear();
+      setPrompts([]);
+      setSelectedPromptId(undefined);
+      setView('library');
+      setStatus('ready');
+      showToast('Stockage local réinitialisé');
+    } catch {
+      showToast('Impossible de réinitialiser le stockage local.');
     }
   }
 
@@ -822,13 +878,18 @@ export default function App({ storage = defaultStorage }: AppProps) {
           <div role="alert" className="state-card error-state p-6 text-left">
             <p className="text-sm font-semibold">Impossible de charger les prompts.</p>
             <p className="mt-2 text-sm leading-6">Vérifiez le stockage local puis réessayez.</p>
-            <button
-              type="button"
-              onClick={() => setLoadAttempt((attempt) => attempt + 1)}
-              className="button-secondary mt-4"
-            >
-              Réessayer
-            </button>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setLoadAttempt((attempt) => attempt + 1)}
+                className="button-secondary"
+              >
+                Réessayer
+              </button>
+              <button type="button" onClick={resetStorage} className="button-secondary">
+                Réinitialiser le stockage local
+              </button>
+            </div>
           </div>
         )}
         <div key={`${status}-${view}`} className="page-transition">

@@ -8,7 +8,7 @@ describe('createPromptFromDraft', () => {
       {
         title: '  Analyse  ',
         body: '  Analyse ce document.  ',
-        tags: [' analyse ', ''],
+        tags: [' analyse ', 'analyse', ''],
         model: ' Claude ',
         context: '  Synthèse  ',
         rating: 5,
