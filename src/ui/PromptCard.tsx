@@ -38,19 +38,10 @@ export function PromptCard({
   const variables = parseVariables(prompt.body);
 
   return (
-    <article
-      className="prompt-card"
-      role="button"
-      tabIndex={0}
-      aria-label={`Ouvrir ${prompt.title}`}
-      onClick={onOpen}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onOpen();
-        }
-      }}
-    >
+    <article className="prompt-card">
+      <button type="button" onClick={onOpen} className="prompt-card__open">
+        <span className="sr-only">Ouvrir {prompt.title}</span>
+      </button>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h3 className="font-sans text-base font-semibold leading-6 text-ink">
@@ -101,7 +92,7 @@ export function PromptCard({
         )}
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-3 text-sm text-muted">
-        <span aria-label={`Note ${prompt.rating} sur 5`} className="rating-dots">
+        <span role="img" aria-label={`Note ${prompt.rating} sur 5`} className="rating-dots">
           {[1, 2, 3, 4, 5].map((rating) => (
             <span
               key={rating}
@@ -110,9 +101,7 @@ export function PromptCard({
             />
           ))}
         </span>
-        <span aria-label={`${prompt.copyCount} copies`} className="font-mono text-xs">
-          copié {prompt.copyCount}×
-        </span>
+        <span className="font-mono text-xs">copié {prompt.copyCount}×</span>
         <button
           type="button"
           onClick={(event) => {

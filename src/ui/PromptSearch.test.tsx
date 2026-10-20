@@ -18,8 +18,8 @@ describe('PromptSearch tag chips', () => {
       onMinRatingChange: vi.fn(),
     };
     const { rerender } = render(<PromptSearch {...props} />);
-    const selected = screen.getByRole('button', { name: 'Tag : analyse', pressed: true });
-    const unselected = screen.getByRole('button', { name: 'Tag : email', pressed: false });
+    const selected = screen.getByRole('button', { name: 'Tag : #analyse', pressed: true });
+    const unselected = screen.getByRole('button', { name: 'Tag : #email', pressed: false });
     const cross = within(selected).getByText('×');
 
     expect(cross).toBeVisible();

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { createPromptFromDraft } from '../domain/promptCreation';
 import { recordUsage, toggleFavorite } from '../domain/promptActions';
@@ -114,7 +114,11 @@ function PromptLibrary({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Bibliothèque</p>
-          <h2 id="library-heading" className="mt-2 text-2xl font-semibold tracking-tight">
+          <h2
+            id="library-heading"
+            tabIndex={-1}
+            className="mt-2 text-2xl font-semibold tracking-tight"
+          >
             Vos prompts
           </h2>
         </div>
@@ -218,7 +222,11 @@ function PromptEditor({
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Éditeur</p>
-          <h2 id="editor-heading" className="mt-2 text-2xl font-semibold tracking-tight">
+          <h2
+            id="editor-heading"
+            tabIndex={-1}
+            className="mt-2 text-2xl font-semibold tracking-tight"
+          >
             {isEditing ? 'Modifier le prompt' : 'Nouveau prompt'}
           </h2>
         </div>
@@ -422,6 +430,16 @@ export default function App({ storage = defaultStorage }: AppProps) {
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
   const [variablePrompt, setVariablePrompt] = useState<Prompt>();
+  const hasChangedView = useRef(false);
+
+  useEffect(() => {
+    if (!hasChangedView.current) {
+      hasChangedView.current = true;
+      return;
+    }
+
+    document.getElementById(`${view}-heading`)?.focus();
+  }, [view]);
 
   const tags = useMemo(
     () =>
@@ -473,6 +491,10 @@ export default function App({ storage = defaultStorage }: AppProps) {
       const tagName = target?.tagName;
       const isTyping = tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT';
 
+      if (variablePrompt) {
+        return;
+      }
+
       if (event.key === 'Escape' && view === 'editor') {
         event.preventDefault();
         setView('library');
@@ -497,7 +519,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
 
     window.addEventListener('keydown', handleShortcut);
     return () => window.removeEventListener('keydown', handleShortcut);
-  }, [status, view]);
+  }, [status, variablePrompt, view]);
 
   function openEditor(prompt?: Prompt, initialDraft?: PromptDraft) {
     setEditingPromptId(prompt?.id);
@@ -771,12 +793,13 @@ export default function App({ storage = defaultStorage }: AppProps) {
             <button
               type="button"
               onClick={() => openEditor()}
-              aria-label="Nouveau prompt"
-              aria-keyshortcuts="Control+N Meta+N n"
+              aria-keyshortcuts="n"
               className="button-primary inline-flex items-center gap-2"
             >
               <span>Nouveau prompt</span>
-              <kbd className="shortcut-key">⌘N</kbd>
+              <kbd className="shortcut-key" aria-hidden="true">
+                N
+              </kbd>
             </button>
           </div>
         </div>

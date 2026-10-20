@@ -137,7 +137,7 @@ describe('Prompt Diary prompt library', () => {
     expect(screen.queryByRole('heading', { name: 'Réponse client' })).not.toBeInTheDocument();
 
     await user.clear(screen.getByRole('searchbox', { name: 'Rechercher dans les prompts' }));
-    await user.click(screen.getByRole('button', { name: 'Tag : analyse' }));
+    await user.click(screen.getByRole('button', { name: 'Tag : #analyse' }));
     await user.click(screen.getByRole('button', { name: 'Note minimale : 5+' }));
     expect(screen.getByRole('heading', { name: 'Analyse de document' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Réponse client' })).not.toBeInTheDocument();
@@ -313,6 +313,21 @@ describe('Prompt Diary prompt library', () => {
     const useButton = screen.getByRole('button', { name: 'Utiliser' });
     await user.click(useButton);
     await screen.findByLabelText('client');
+    const closeButton = screen.getByRole('button', { name: 'Fermer' });
+    const submitButton = screen.getByRole('button', { name: 'Copier le prompt rempli' });
+
+    submitButton.focus();
+    await user.tab();
+    expect(closeButton).toHaveFocus();
+    closeButton.focus();
+    await user.tab({ shift: true });
+    expect(submitButton).toHaveFocus();
+
+    closeButton.focus();
+    await user.keyboard('n');
+    expect(screen.getByRole('dialog')).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Nouveau prompt' })).not.toBeInTheDocument();
+
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(useButton).toHaveFocus();
@@ -334,6 +349,7 @@ describe('Prompt Diary prompt library', () => {
     await user.keyboard('n');
 
     expect(screen.getByRole('heading', { name: 'Nouveau prompt' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Nouveau prompt' })).toHaveFocus();
   });
 
   it('focuses search with slash and closes the editor with Escape', async () => {
@@ -348,6 +364,7 @@ describe('Prompt Diary prompt library', () => {
     expect(screen.getByRole('heading', { name: 'Nouveau prompt' })).toBeVisible();
     await user.keyboard('{Escape}');
     expect(screen.getByText('Aucun prompt enregistré')).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Vos prompts' })).toHaveFocus();
   });
 
   it('shows the quality coach while writing and opens the examples screen', async () => {

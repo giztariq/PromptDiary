@@ -26,12 +26,14 @@ export function VariableModal({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const dialogRef = useRef<HTMLDivElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     previousFocusRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialogRef.current?.focus();
 
     return () => {
       previousFocusRef.current?.focus();
@@ -73,6 +75,32 @@ export function VariableModal({
     if (event.key === 'Escape' && !saving) {
       event.preventDefault();
       onClose();
+      return;
+    }
+
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    const focusableElements = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+    );
+
+    if (!focusableElements || focusableElements.length === 0) {
+      event.preventDefault();
+      dialogRef.current?.focus();
+      return;
+    }
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (event.shiftKey && document.activeElement === firstElement) {
+      event.preventDefault();
+      lastElement.focus();
+    } else if (!event.shiftKey && document.activeElement === lastElement) {
+      event.preventDefault();
+      firstElement.focus();
     }
   }
 
@@ -97,11 +125,18 @@ export function VariableModal({
     <div
       className="fixed inset-0 z-30 flex items-center justify-center bg-ink/40 p-4"
       onKeyDown={handleKeyDown}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !saving) {
+          onClose();
+        }
+      }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="variable-modal-title"
+        tabIndex={-1}
         className="surface-card max-h-[90vh] w-full max-w-lg overflow-auto p-6 shadow-lg sm:p-8"
       >
         <div className="flex items-start justify-between gap-4">

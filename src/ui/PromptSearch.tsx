@@ -49,7 +49,7 @@ export function PromptSearch({
               key={tag}
               type="button"
               aria-pressed={selected}
-              aria-label={`Tag : ${tag}`}
+              aria-label={`Tag : #${tag}`}
               onClick={() => onToggleTag(tag)}
               className="filter-chip inline-flex items-center gap-1"
             >

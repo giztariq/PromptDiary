@@ -236,7 +236,11 @@ export function Examples({ examples, existingPrompts, onBack, onAdd }: ExamplesP
           <LogoMark />
           <div>
             <p className="eyebrow">Bibliothèque locale</p>
-            <h1 id="examples-heading" className="mt-2 text-3xl font-semibold tracking-tight">
+            <h1
+              id="examples-heading"
+              tabIndex={-1}
+              className="mt-2 text-3xl font-semibold tracking-tight"
+            >
               Bibliothèque d’exemples
             </h1>
             <h2 className="sr-only">Exemples de prompts</h2>

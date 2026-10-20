@@ -20,7 +20,11 @@ export function Settings({ onBack, onExport, onImport, onClearAll }: SettingsPro
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="eyebrow">Réglages</p>
-          <h2 id="settings-heading" className="mt-2 text-2xl font-semibold tracking-tight">
+          <h2
+            id="settings-heading"
+            tabIndex={-1}
+            className="mt-2 text-2xl font-semibold tracking-tight"
+          >
             Bibliothèque locale
           </h2>
         </div>

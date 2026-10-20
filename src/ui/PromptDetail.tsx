@@ -48,7 +48,11 @@ export function PromptDetail({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="eyebrow">Détail</p>
-          <h2 id="detail-heading" className="mt-2 text-2xl font-semibold tracking-tight">
+          <h2
+            id="detail-heading"
+            tabIndex={-1}
+            className="mt-2 text-2xl font-semibold tracking-tight"
+          >
             {prompt.title}
           </h2>
         </div>
