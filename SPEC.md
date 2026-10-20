@@ -88,6 +88,7 @@ Consultant, formateur ou freelance qui utilise l'IA tous les jours et veut capit
 - La modale de variables piège le focus et le restaure à la fermeture.
 - Le changement d'écran place le focus sur le titre principal.
 - Les états chargement, vide et erreur sont explicites ; l'erreur de stockage propose de réessayer ou de réinitialiser les données locales.
+- Une erreur de rendu inattendue affiche un écran de secours avec rechargement, sans toucher aux données locales.
 - Les raccourcis sont désactivés quand une modale est ouverte.
 
 ### US11 — Local-first et hors ligne
