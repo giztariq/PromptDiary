@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPromptFromDraft } from '../domain/promptCreation';
 import { incrementCopyCount, toggleFavorite } from '../domain/promptActions';
 import { exportPrompts, mergePromptLibrary, parsePromptExport } from '../domain/importExport';
+import { importExamples } from '../domain/importExample';
 import { searchPrompts } from '../domain/search';
 import {
   validatePromptDraft,
@@ -11,6 +12,7 @@ import {
 } from '../domain/validation';
 import { detectVaguePrompt } from '../domain/vagueDetection';
 import type { Prompt } from '../domain/types';
+import { EXAMPLES, type Example } from '../data/examples';
 import { createIndexedDbAdapter } from '../storage/indexedDbAdapter';
 import type { StorageAdapter } from '../storage/storageAdapter';
 import { PromptCard } from './PromptCard';
@@ -645,6 +647,19 @@ export default function App({ storage = defaultStorage }: AppProps) {
     }
   }
 
+  async function importExamplePrompts(examples: Example[]) {
+    try {
+      const report = importExamples(examples, prompts);
+      for (const prompt of report.ajoutes) {
+        await storage.save(prompt);
+      }
+      setPrompts((currentPrompts) => [...currentPrompts, ...report.ajoutes]);
+      showToast(`${report.ajoutes.length} ajoutés, ${report.ignores} déjà présents`);
+    } catch {
+      showToast('Impossible d’ajouter les exemples.');
+    }
+  }
+
   async function deletePrompt(prompt: Prompt) {
     try {
       await storage.remove(prompt.id);
@@ -793,8 +808,10 @@ export default function App({ storage = defaultStorage }: AppProps) {
           )}
           {status === 'ready' && view === 'examples' && (
             <Examples
+              examples={EXAMPLES}
+              existingPrompts={prompts}
               onBack={() => setView('library')}
-              onUse={(example) => openEditor(undefined, example)}
+              onAdd={(examples) => void importExamplePrompts(examples)}
             />
           )}
           {status === 'ready' && view === 'detail' && selectedPrompt && (

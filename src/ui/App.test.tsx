@@ -247,6 +247,72 @@ describe('Prompt Diary prompt library', () => {
     expect(screen.getByRole('heading', { name: 'Exemples de prompts' })).toBeVisible();
   });
 
+  it('filters the example library and imports one example with its source tag', async () => {
+    const user = userEvent.setup();
+    const adapter = createMemoryAdapter();
+    render(<App storage={adapter} />);
+
+    await screen.findByText('Aucun prompt enregistré');
+    await user.click(screen.getByRole('button', { name: 'Exemples' }));
+    expect(await screen.findByRole('heading', { name: 'Bibliothèque d’exemples' })).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Code' }));
+    expect(screen.getByText('2 résultats')).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Relire un module TypeScript' })).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Ajouter Relire un module TypeScript' }));
+
+    expect(await screen.findByText('1 ajoutés, 0 déjà présents')).toBeVisible();
+    await expect(adapter.list()).resolves.toHaveLength(1);
+    await expect(adapter.list()).resolves.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Relire un module TypeScript',
+          tags: expect.arrayContaining(['exemple']),
+        }),
+      ]),
+    );
+  });
+
+  it('opens an example detail view and closes the library with Escape', async () => {
+    const user = userEvent.setup();
+    render(<App storage={createMemoryAdapter()} />);
+
+    await screen.findByText('Aucun prompt enregistré');
+    await user.click(screen.getByRole('button', { name: 'Exemples' }));
+    await user.click(screen.getAllByRole('button', { name: 'Voir' })[0]);
+
+    expect(
+      await screen.findByRole('heading', { name: 'Rédiger un email professionnel clair' }),
+    ).toBeVisible();
+    expect(screen.getByText('Corps du prompt')).toBeVisible();
+    expect(
+      screen.getByText(
+        'Réponse à un client ou à un collègue lorsque les informations sont encore sous forme de notes.',
+      ),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Ajouter à ma bibliothèque' })).toBeVisible();
+
+    await user.keyboard('{Escape}');
+    expect(screen.getByText('Aucun prompt enregistré')).toBeVisible();
+  });
+
+  it('confirms and imports all bundled examples', async () => {
+    const user = userEvent.setup();
+    const adapter = createMemoryAdapter();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<App storage={adapter} />);
+
+    await screen.findByText('Aucun prompt enregistré');
+    await user.click(screen.getByRole('button', { name: 'Exemples' }));
+    await user.click(screen.getByRole('button', { name: 'Tout ajouter' }));
+
+    expect(confirm).toHaveBeenCalledWith('Ajouter 12 exemples à votre bibliothèque ?');
+    expect(await screen.findByText('12 ajoutés, 0 déjà présents')).toBeVisible();
+    await expect(adapter.list()).resolves.toHaveLength(12);
+    confirm.mockRestore();
+  });
+
   it('supports detail actions for editing, duplicating, and deleting', async () => {
     const user = userEvent.setup();
     const prompt: Prompt = {
