@@ -22,6 +22,7 @@ function cloneValues(values: Record<string, string>): Record<string, string> {
 function openDatabase(databaseName: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(databaseName, DATABASE_VERSION);
+    let blocked = false;
 
     request.onupgradeneeded = () => {
       const database = request.result;
@@ -32,8 +33,24 @@ function openDatabase(databaseName: string): Promise<IDBDatabase> {
         database.createObjectStore(VALUES_STORE_NAME, { keyPath: 'key' });
       }
     };
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const database = request.result;
+      if (blocked) {
+        database.close();
+        return;
+      }
+      database.onversionchange = () => database.close();
+      resolve(database);
+    };
     request.onerror = () => reject(request.error ?? new Error('Unable to open IndexedDB'));
+    request.onblocked = () => {
+      blocked = true;
+      reject(
+        new Error(
+          'La base locale est bloquée par un autre onglet. Fermez les autres onglets puis réessayez.',
+        ),
+      );
+    };
   });
 }
 
@@ -48,7 +65,6 @@ export function createIndexedDbAdapter(databaseName = DATABASE_NAME): StorageAda
     return new Promise<T>((resolve, reject) => {
       let result: T;
       let settled = false;
-      const transaction = database.transaction(storeNames, mode);
       const close = () => database.close();
       const fail = (error: Error) => {
         if (!settled) {
@@ -57,6 +73,15 @@ export function createIndexedDbAdapter(databaseName = DATABASE_NAME): StorageAda
           reject(error);
         }
       };
+
+      let transaction: IDBTransaction;
+      try {
+        transaction = database.transaction(storeNames, mode);
+      } catch (error) {
+        close();
+        reject(error instanceof Error ? error : new Error('IndexedDB transaction failed'));
+        return;
+      }
 
       transaction.onabort = () =>
         fail(transaction.error ?? new Error('IndexedDB transaction aborted'));
