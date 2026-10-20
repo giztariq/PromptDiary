@@ -33,6 +33,12 @@ describe('prompt import and export', () => {
     expect(library[0].tags).toEqual(['analyse']);
   });
 
+  it('round-trips the optional last-used timestamp', () => {
+    const usedPrompt = { ...prompt, lastUsedAt: '2026-10-20T09:30:00.000Z' };
+
+    expect(parsePromptExport(exportPrompts([usedPrompt]))).toEqual([usedPrompt]);
+  });
+
   it('merges imported prompts without duplicating ids', () => {
     const imported = [prompt, { ...prompt, id: 'prompt-2', title: 'Nouveau' }];
 

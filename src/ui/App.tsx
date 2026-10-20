@@ -11,10 +11,11 @@ import {
   type PromptDraftErrors,
 } from '../domain/validation';
 import { detectVaguePrompt } from '../domain/vagueDetection';
+import { fillVariables, parseVariables } from '../domain/variables';
 import type { Prompt } from '../domain/types';
 import { EXAMPLES, type Example } from '../data/examples';
 import { createIndexedDbAdapter } from '../storage/indexedDbAdapter';
-import type { StorageAdapter } from '../storage/storageAdapter';
+import { variableValuesKey, type StorageAdapter } from '../storage/storageAdapter';
 import { PromptCard } from './PromptCard';
 import { PromptDetail } from './PromptDetail';
 import { PromptSearch } from './PromptSearch';
@@ -23,6 +24,7 @@ import { Toast } from './Toast';
 import { LogoMark } from './LogoMark';
 import { QualityCoach } from './QualityCoach';
 import { Examples } from './Examples';
+import { VariableModal } from './VariableModal';
 
 interface AppProps {
   storage?: StorageAdapter;
@@ -83,6 +85,7 @@ interface PromptLibraryProps {
   onMinRatingChange: (rating: number) => void;
   onOpen: (prompt: Prompt) => void;
   onCopy: (prompt: Prompt) => void;
+  onUse: (prompt: Prompt) => void;
   onToggleFavorite: (prompt: Prompt) => void;
   onClearFilters: () => void;
 }
@@ -102,6 +105,7 @@ function PromptLibrary({
   onMinRatingChange,
   onOpen,
   onCopy,
+  onUse,
   onToggleFavorite,
   onClearFilters,
 }: PromptLibraryProps) {
@@ -170,6 +174,7 @@ function PromptLibrary({
               prompt={prompt}
               onOpen={() => onOpen(prompt)}
               onCopy={() => onCopy(prompt)}
+              onUse={() => onUse(prompt)}
               onToggleFavorite={() => onToggleFavorite(prompt)}
               query={query}
             />
@@ -206,6 +211,7 @@ function PromptEditor({
   onCopyPreview,
 }: PromptEditorProps) {
   const detection = detectVaguePrompt(draft);
+  const variables = parseVariables(draft.body);
 
   return (
     <section aria-labelledby="editor-heading" aria-busy={saving} className="mt-8">
@@ -260,6 +266,12 @@ function PromptEditor({
               rows={10}
               className="form-textarea mt-2 font-mono text-sm"
             />
+            {variables.length > 0 && (
+              <p role="status" className="mt-2 text-sm text-muted">
+                {variables.length} variable{variables.length === 1 ? '' : 's'} détectée
+                {variables.length === 1 ? '' : 's'} : {variables.join(', ')}
+              </p>
+            )}
             {errors.body && (
               <p id="prompt-body-error" className="mt-1 text-sm text-danger">
                 {errors.body}
@@ -409,6 +421,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
   const [errors, setErrors] = useState<PromptDraftErrors>({});
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [variablePrompt, setVariablePrompt] = useState<Prompt>();
 
   const tags = useMemo(
     () =>
@@ -422,6 +435,10 @@ export default function App({ storage = defaultStorage }: AppProps) {
     [minRating, prompts, query, selectedTags],
   );
   const selectedPrompt = prompts.find((prompt) => prompt.id === selectedPromptId);
+  const variableNames = useMemo(
+    () => (variablePrompt ? parseVariables(variablePrompt.body) : []),
+    [variablePrompt],
+  );
 
   function showToast(message: string) {
     setToast(message);
@@ -548,6 +565,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
           favorite: existing.favorite,
           copyCount: existing.copyCount,
           createdAt: existing.createdAt,
+          lastUsedAt: existing.lastUsedAt,
         }
       : prompt;
     setSaving(true);
@@ -591,6 +609,34 @@ export default function App({ storage = defaultStorage }: AppProps) {
       );
     } catch {
       showToast('Impossible de copier le prompt.');
+    }
+  }
+
+  async function copyFilledPrompt(prompt: Prompt, values: Record<string, string>) {
+    const timestamp = new Date().toISOString();
+    try {
+      if (!navigator.clipboard) {
+        throw new Error('Clipboard unavailable');
+      }
+      await navigator.clipboard.writeText(fillVariables(prompt.body, values));
+      const updated: Prompt = {
+        ...prompt,
+        copyCount: prompt.copyCount + 1,
+        lastUsedAt: timestamp,
+        updatedAt: timestamp,
+      };
+      await storage.save(updated);
+      await storage.setValue(variableValuesKey(prompt.id), values);
+      setPrompts((currentPrompts) =>
+        currentPrompts.map((currentPrompt) =>
+          currentPrompt.id === updated.id ? updated : currentPrompt,
+        ),
+      );
+      setVariablePrompt(undefined);
+      showToast('Prompt rempli copié');
+    } catch {
+      showToast('Impossible de copier ou d’enregistrer le prompt rempli.');
+      throw new Error('Unable to copy and save filled prompt');
     }
   }
 
@@ -790,6 +836,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
                 setView('detail');
               }}
               onCopy={(prompt) => void copyPrompt(prompt)}
+              onUse={(prompt) => setVariablePrompt(prompt)}
               onToggleFavorite={(prompt) => void changeFavorite(prompt)}
               onClearFilters={() => {
                 setQuery('');
@@ -819,6 +866,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
               prompt={selectedPrompt}
               onBack={() => setView('library')}
               onCopy={() => void copyPrompt(selectedPrompt)}
+              onUse={() => setVariablePrompt(selectedPrompt)}
               onToggleFavorite={() => void changeFavorite(selectedPrompt)}
               onEdit={() => openEditor(selectedPrompt)}
               onDuplicate={() => void duplicatePrompt(selectedPrompt)}
@@ -864,6 +912,15 @@ export default function App({ storage = defaultStorage }: AppProps) {
         </footer>
       )}
       <Toast key={toastNonce} message={toast} />
+      {variablePrompt && (
+        <VariableModal
+          prompt={variablePrompt}
+          variables={variableNames}
+          storage={storage}
+          onClose={() => setVariablePrompt(undefined)}
+          onCopyFilled={(values) => copyFilledPrompt(variablePrompt, values)}
+        />
+      )}
     </main>
   );
 }

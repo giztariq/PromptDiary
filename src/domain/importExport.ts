@@ -38,7 +38,8 @@ function isPrompt(value: unknown): value is Prompt {
     Number.isInteger(value.copyCount) &&
     value.copyCount >= 0 &&
     typeof value.createdAt === 'string' &&
-    typeof value.updatedAt === 'string'
+    typeof value.updatedAt === 'string' &&
+    (value.lastUsedAt === undefined || typeof value.lastUsedAt === 'string')
   );
 }
 

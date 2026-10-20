@@ -6,6 +6,7 @@ import type { Prompt } from '../domain/types';
 import { exportPrompts } from '../domain/importExport';
 import { createMemoryAdapter } from '../storage/memoryAdapter';
 import type { StorageAdapter } from '../storage/storageAdapter';
+import { variableValuesKey } from '../storage/storageAdapter';
 import App from './App';
 
 describe('Prompt Diary prompt library', () => {
@@ -203,6 +204,117 @@ describe('Prompt Diary prompt library', () => {
     expect(writeText).toHaveBeenCalledWith('Corps complet à copier.');
     await expect(adapter.get('detail')).resolves.toMatchObject({ copyCount: 5 });
     expect(await screen.findByRole('status')).toHaveTextContent('Prompt copié');
+  });
+
+  it('fills a dynamic prompt, persists its values, and restores them when reopened', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    const prompt: Prompt = {
+      id: 'dynamic',
+      title: 'Réponse personnalisée',
+      body: 'Réponds à {{client}} avec un ton {{ton}}.',
+      tags: [],
+      model: 'GPT',
+      context: '',
+      rating: 4,
+      favorite: false,
+      copyCount: 0,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+    };
+    const adapter = createMemoryAdapter([prompt]);
+
+    render(<App storage={adapter} />);
+    await screen.findByRole('heading', { name: 'Réponse personnalisée' });
+    expect(screen.getByText('2 variables')).toBeVisible();
+
+    const useButton = screen.getByRole('button', { name: 'Utiliser' });
+    await user.click(useButton);
+    expect(await screen.findByRole('dialog')).toBeVisible();
+    const clientInput = await screen.findByLabelText('client');
+    expect(clientInput).toHaveFocus();
+    expect(screen.getAllByRole('textbox')).toHaveLength(2);
+
+    await user.type(clientInput, 'Acme');
+    await user.type(screen.getByLabelText('ton'), 'direct');
+    await user.click(screen.getByRole('button', { name: 'Copier le prompt rempli' }));
+
+    expect(writeText).toHaveBeenCalledWith('Réponds à Acme avec un ton direct.');
+    await waitFor(async () => {
+      const savedPrompt = await adapter.get('dynamic');
+      expect(savedPrompt).toMatchObject({ copyCount: 1, lastUsedAt: expect.any(String) });
+      expect(savedPrompt?.updatedAt).toBe(savedPrompt?.lastUsedAt);
+      await expect(adapter.getValue(variableValuesKey('dynamic'))).resolves.toEqual({
+        client: 'Acme',
+        ton: 'direct',
+      });
+    });
+    expect(await screen.findByRole('status')).toHaveTextContent('Prompt rempli copié');
+
+    await user.click(screen.getByRole('button', { name: 'Utiliser' }));
+    expect(await screen.findByDisplayValue('Acme')).toBeVisible();
+    expect(screen.getByDisplayValue('direct')).toBeVisible();
+  });
+
+  it('updates the editor variable indicator on every body change', async () => {
+    const user = userEvent.setup();
+    render(<App storage={createMemoryAdapter()} />);
+
+    await screen.findByText('Aucun prompt enregistré');
+    await user.click(screen.getByRole('button', { name: 'Nouveau prompt' }));
+    const body = screen.getByLabelText('Corps du prompt');
+    fireEvent.change(body, {
+      target: { value: 'Bonjour {{client}}, avec un ton {{ton}}.' },
+    });
+    expect(screen.getByText('2 variables détectées : client, ton')).toBeVisible();
+    await user.clear(body);
+    fireEvent.change(body, { target: { value: 'Bonjour {{client}}.' } });
+    expect(screen.getByText('1 variable détectée : client')).toBeVisible();
+    expect(screen.queryByText('2 variables détectées : client, ton')).not.toBeInTheDocument();
+  });
+
+  it('supports Escape and Enter in the variable modal', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    const prompt: Prompt = {
+      id: 'keyboard-dynamic',
+      title: 'Prompt clavier',
+      body: 'Bonjour {{client}}.',
+      tags: [],
+      model: '',
+      context: '',
+      rating: 3,
+      favorite: false,
+      copyCount: 0,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+    };
+    const adapter = createMemoryAdapter([prompt]);
+
+    render(<App storage={adapter} />);
+    await screen.findByRole('heading', { name: 'Prompt clavier' });
+    const useButton = screen.getByRole('button', { name: 'Utiliser' });
+    await user.click(useButton);
+    await screen.findByLabelText('client');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(useButton).toHaveFocus();
+
+    await user.click(useButton);
+    const clientInput = await screen.findByLabelText('client');
+    await user.type(clientInput, 'Acme');
+    await user.keyboard('{Enter}');
+    expect(writeText).toHaveBeenCalledWith('Bonjour Acme.');
+    expect(await screen.findByRole('status')).toHaveTextContent('Prompt rempli copié');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('opens the editor with the n keyboard shortcut', async () => {

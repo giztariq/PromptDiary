@@ -12,4 +12,5 @@ export interface Prompt {
   copyCount: number;
   createdAt: string;
   updatedAt: string;
+  lastUsedAt?: string;
 }

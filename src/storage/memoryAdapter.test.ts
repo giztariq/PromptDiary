@@ -51,6 +51,57 @@ describe('memory storage adapter', () => {
     expect(await adapter.list()).toEqual([]);
   });
 
+  it('saves and reads variable values without sharing mutable references', async () => {
+    const adapter = createMemoryAdapter();
+    const values = { nom: 'Ada', contexte: 'analyse' };
+
+    await adapter.setValue('values:prompt-1', values);
+    values.nom = 'mutated outside the adapter';
+    const stored = await adapter.getValue('values:prompt-1');
+
+    expect(stored).toEqual({ nom: 'Ada', contexte: 'analyse' });
+    if (stored) {
+      stored.nom = 'mutated from the read result';
+    }
+    expect(await adapter.getValue('values:prompt-1')).toEqual({
+      nom: 'Ada',
+      contexte: 'analyse',
+    });
+  });
+
+  it('reinitializes values when saving the same key again', async () => {
+    const adapter = createMemoryAdapter();
+
+    await adapter.setValue('values:prompt-1', { nom: 'Ada', ancien: 'à supprimer' });
+    await adapter.setValue('values:prompt-1', { nom: 'Grace' });
+
+    expect(await adapter.getValue('values:prompt-1')).toEqual({ nom: 'Grace' });
+  });
+
+  it('resets values when removing their key', async () => {
+    const adapter = createMemoryAdapter();
+
+    await adapter.setValue('values:prompt-1', { nom: 'Ada' });
+    await adapter.removeValue('values:prompt-1');
+
+    expect(await adapter.getValue('values:prompt-1')).toBeUndefined();
+  });
+
+  it('removes prompt values and clears all values', async () => {
+    const adapter = createMemoryAdapter([prompt]);
+
+    await adapter.setValue('values:prompt-1', { nom: 'Ada' });
+    await adapter.setValue('values:prompt-2', { nom: 'Grace' });
+    await adapter.remove(prompt.id);
+
+    expect(await adapter.getValue('values:prompt-1')).toBeUndefined();
+    expect(await adapter.getValue('values:prompt-2')).toEqual({ nom: 'Grace' });
+
+    await adapter.clear();
+
+    expect(await adapter.getValue('values:prompt-2')).toBeUndefined();
+  });
+
   it('clears the library', async () => {
     const adapter = createMemoryAdapter([prompt]);
 

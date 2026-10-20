@@ -1,4 +1,5 @@
 import type { Prompt } from '../domain/types';
+import { parseVariables } from '../domain/variables';
 import { detectVaguePrompt } from '../domain/vagueDetection';
 import { FavoriteButton } from './FavoriteButton';
 import { HighlightedText } from './HighlightedText';
@@ -7,6 +8,7 @@ interface PromptCardProps {
   prompt: Prompt;
   onOpen: () => void;
   onCopy: () => void;
+  onUse: () => void;
   onToggleFavorite: () => void;
   query: string;
 }
@@ -25,7 +27,16 @@ function VagueBadge({ prompt }: { prompt: Prompt }) {
   );
 }
 
-export function PromptCard({ prompt, onOpen, onCopy, onToggleFavorite, query }: PromptCardProps) {
+export function PromptCard({
+  prompt,
+  onOpen,
+  onCopy,
+  onUse,
+  onToggleFavorite,
+  query,
+}: PromptCardProps) {
+  const variables = parseVariables(prompt.body);
+
   return (
     <article
       className="prompt-card"
@@ -51,6 +62,11 @@ export function PromptCard({ prompt, onOpen, onCopy, onToggleFavorite, query }: 
         </div>
         <div className="flex shrink-0 items-start gap-2">
           <VagueBadge prompt={prompt} />
+          {variables.length > 0 && (
+            <span className="badge">
+              {variables.length} variable{variables.length === 1 ? '' : 's'}
+            </span>
+          )}
           <span className="prompt-card__favorite">
             <FavoriteButton
               favorite={prompt.favorite}
@@ -70,6 +86,19 @@ export function PromptCard({ prompt, onOpen, onCopy, onToggleFavorite, query }: 
           </span>
         ))}
         {prompt.model && <span className="badge">{prompt.model}</span>}
+        {variables.length > 0 && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onUse();
+            }}
+            onKeyDown={(event) => event.stopPropagation()}
+            className="button-primary ml-auto min-h-9 px-3 py-1 text-xs"
+          >
+            Utiliser
+          </button>
+        )}
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-3 text-sm text-muted">
         <span aria-label={`Note ${prompt.rating} sur 5`} className="rating-dots">

@@ -1,10 +1,12 @@
 import type { Prompt } from '../domain/types';
+import { parseVariables } from '../domain/variables';
 import { FavoriteButton } from './FavoriteButton';
 
 interface PromptDetailProps {
   prompt: Prompt;
   onBack: () => void;
   onCopy: () => void;
+  onUse: () => void;
   onToggleFavorite: () => void;
   onEdit?: () => void;
   onDuplicate?: () => void;
@@ -28,11 +30,13 @@ export function PromptDetail({
   prompt,
   onBack,
   onCopy,
+  onUse,
   onToggleFavorite,
   onEdit,
   onDuplicate,
   onDelete,
 }: PromptDetailProps) {
+  const variables = parseVariables(prompt.body);
   const handleDelete = () => {
     if (window.confirm(`Supprimer « ${prompt.title} » ? Cette action est irréversible.`)) {
       onDelete?.();
@@ -67,6 +71,16 @@ export function PromptDetail({
         >
           {prompt.body}
         </pre>
+        {variables.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="badge">
+              {variables.length} variable{variables.length === 1 ? '' : 's'}
+            </span>
+            <button type="button" onClick={onUse} className="button-primary min-h-10 px-4 py-2">
+              Utiliser
+            </button>
+          </div>
+        )}
         <button
           type="button"
           onClick={onCopy}
