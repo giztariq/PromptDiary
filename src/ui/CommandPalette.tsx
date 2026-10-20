@@ -225,8 +225,12 @@ export function CommandPalette({
                     active ? 'bg-accent-soft text-ink' : 'text-ink'
                   }`}
                 >
-                  <span className="truncate">{item.label}</span>
-                  {item.hint && <span className="shrink-0 text-xs text-muted">{item.hint}</span>}
+                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                  {item.hint && (
+                    <span className="max-w-[45%] truncate text-right text-xs text-muted">
+                      {item.hint}
+                    </span>
+                  )}
                 </li>
               );
             })}

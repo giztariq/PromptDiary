@@ -2,6 +2,7 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createGzip } from 'node:zlib';
 
 const root = resolve(fileURLToPath(new URL('../dist', import.meta.url)));
 const port = Number(process.env.PORT ?? 4173);
@@ -20,6 +21,16 @@ const contentTypes = {
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
 };
+
+const compressibleExtensions = new Set([
+  '.css',
+  '.html',
+  '.js',
+  '.json',
+  '.map',
+  '.svg',
+  '.webmanifest',
+]);
 
 function send(response, status, message) {
   response.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -66,13 +77,26 @@ const server = createServer((request, response) => {
   }
 
   const extension = extname(filePath).toLowerCase();
+  const acceptsGzip = /\bgzip\b/i.test(request.headers['accept-encoding'] ?? '');
+  const shouldCompress = compressibleExtensions.has(extension) && acceptsGzip;
+
   response.setHeader('Content-Type', contentTypes[extension] ?? 'application/octet-stream');
   response.setHeader('X-Content-Type-Options', 'nosniff');
   response.setHeader('Referrer-Policy', 'no-referrer');
   response.setHeader(
     'Cache-Control',
-    extension === '.html' ? 'no-cache' : 'public, max-age=31536000, immutable',
+    extension === '.html' || pathname === '/sw.js'
+      ? 'no-cache'
+      : 'public, max-age=31536000, immutable',
   );
+
+  if (compressibleExtensions.has(extension)) {
+    response.setHeader('Vary', 'Accept-Encoding');
+  }
+
+  if (shouldCompress) {
+    response.setHeader('Content-Encoding', 'gzip');
+  }
 
   if (method === 'HEAD') {
     response.writeHead(200);
@@ -88,6 +112,15 @@ const server = createServer((request, response) => {
       response.destroy();
     }
   });
+
+  if (shouldCompress) {
+    stream
+      .pipe(createGzip())
+      .on('error', () => response.destroy())
+      .pipe(response);
+    return;
+  }
+
   stream.pipe(response);
 });
 

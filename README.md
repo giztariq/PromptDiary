@@ -63,7 +63,7 @@ npm run build
 npm start
 ```
 
-`npm start` sert `dist/` avec un petit serveur Node sans dépendance (`scripts/serve.mjs`), avec fallback SPA et en-têtes de cache adaptés. Ouvrir <http://localhost:4173>.
+`npm start` sert `dist/` avec un petit serveur Node sans dépendance (`scripts/serve.mjs`), avec fallback SPA, compression gzip et en-têtes de cache adaptés (le service worker reste en `no-cache`). Ouvrir <http://localhost:4173>.
 
 ## Docker
 
