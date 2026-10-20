@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { createPromptFromDraft } from '../domain/promptCreation';
 import { recordUsage, toggleFavorite } from '../domain/promptActions';
@@ -16,6 +16,7 @@ import type { Prompt } from '../domain/types';
 import { EXAMPLES, type Example } from '../data/examples';
 import { createIndexedDbAdapter } from '../storage/indexedDbAdapter';
 import { variableValuesKey, type StorageAdapter } from '../storage/storageAdapter';
+import { CommandPalette } from './CommandPalette';
 import { PromptCard } from './PromptCard';
 import { PromptDetail } from './PromptDetail';
 import { PromptSearch } from './PromptSearch';
@@ -43,6 +44,18 @@ const emptyDraft: PromptDraft = {
   context: '',
   rating: 0,
 };
+
+function draftSnapshot(draft: PromptDraft, tagsValue: string): string {
+  return JSON.stringify([
+    draft.title,
+    draft.body,
+    draft.tags.join(','),
+    draft.model,
+    draft.context,
+    draft.rating,
+    tagsValue,
+  ]);
+}
 
 function parseTags(value: string): string[] {
   return value
@@ -430,7 +443,10 @@ export default function App({ storage = defaultStorage }: AppProps) {
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
   const [variablePrompt, setVariablePrompt] = useState<Prompt>();
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [editorBaseline, setEditorBaseline] = useState(() => draftSnapshot(emptyDraft, ''));
   const hasChangedView = useRef(false);
+  const isEditorDirty = view === 'editor' && editorBaseline !== draftSnapshot(draft, tagsValue);
 
   useEffect(() => {
     if (!hasChangedView.current) {
@@ -456,6 +472,25 @@ export default function App({ storage = defaultStorage }: AppProps) {
   const variableNames = useMemo(
     () => (variablePrompt ? parseVariables(variablePrompt.body) : []),
     [variablePrompt],
+  );
+
+  const confirmDiscardEditor = useCallback((): boolean => {
+    if (!isEditorDirty) {
+      return true;
+    }
+
+    return window.confirm('Abandonner les modifications non enregistrées ?');
+  }, [isEditorDirty]);
+
+  const requestView = useCallback(
+    (nextView: AppView) => {
+      if (view === 'editor' && nextView !== 'editor' && !confirmDiscardEditor()) {
+        return;
+      }
+
+      setView(nextView);
+    },
+    [confirmDiscardEditor, view],
   );
 
   function showToast(message: string) {
@@ -486,18 +521,74 @@ export default function App({ storage = defaultStorage }: AppProps) {
   }, [loadAttempt, storage]);
 
   useEffect(() => {
+    if (!isEditorDirty) {
+      return;
+    }
+
+    function handleBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isEditorDirty]);
+
+  const openEditor = useCallback(
+    (prompt?: Prompt, initialDraft?: PromptDraft) => {
+      if (!confirmDiscardEditor()) {
+        return;
+      }
+
+      const nextDraft =
+        initialDraft ??
+        (prompt
+          ? {
+              title: prompt.title,
+              body: prompt.body,
+              tags: [...prompt.tags],
+              model: prompt.model,
+              context: prompt.context,
+              rating: prompt.rating,
+            }
+          : emptyDraft);
+      const nextTagsValue = initialDraft
+        ? initialDraft.tags.join(', ')
+        : prompt
+          ? prompt.tags.join(', ')
+          : '';
+
+      setEditingPromptId(prompt?.id);
+      setDraft(nextDraft);
+      setTagsValue(nextTagsValue);
+      setEditorBaseline(draftSnapshot(nextDraft, nextTagsValue));
+      setErrors({});
+      setSaveError('');
+      setSelectedPromptId(prompt?.id);
+      setView('editor');
+    },
+    [confirmDiscardEditor],
+  );
+
+  useEffect(() => {
     function handleShortcut(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       const tagName = target?.tagName;
       const isTyping = tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT';
 
-      if (variablePrompt) {
+      if (variablePrompt || commandOpen) {
+        return;
+      }
+
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setCommandOpen(true);
         return;
       }
 
       if (event.key === 'Escape' && view === 'editor') {
         event.preventDefault();
-        setView('library');
+        requestView('library');
         return;
       }
 
@@ -519,42 +610,35 @@ export default function App({ storage = defaultStorage }: AppProps) {
 
     window.addEventListener('keydown', handleShortcut);
     return () => window.removeEventListener('keydown', handleShortcut);
-  }, [status, variablePrompt, view]);
-
-  function openEditor(prompt?: Prompt, initialDraft?: PromptDraft) {
-    setEditingPromptId(prompt?.id);
-    setDraft(
-      initialDraft ??
-        (prompt
-          ? {
-              title: prompt.title,
-              body: prompt.body,
-              tags: [...prompt.tags],
-              model: prompt.model,
-              context: prompt.context,
-              rating: prompt.rating,
-            }
-          : emptyDraft),
-    );
-    setTagsValue(
-      initialDraft ? initialDraft.tags.join(', ') : prompt ? prompt.tags.join(', ') : '',
-    );
-    setErrors({});
-    setSaveError('');
-    setSelectedPromptId(prompt?.id);
-    setView('editor');
-  }
+  }, [commandOpen, openEditor, requestView, status, variablePrompt, view]);
 
   function openSettings() {
+    if (!confirmDiscardEditor()) {
+      return;
+    }
+
     setSelectedPromptId(undefined);
     setEditingPromptId(undefined);
     setView('settings');
   }
 
   function openExamples() {
+    if (!confirmDiscardEditor()) {
+      return;
+    }
+
     setSelectedPromptId(undefined);
     setEditingPromptId(undefined);
     setView('examples');
+  }
+
+  function openPromptDetail(prompt: Prompt) {
+    if (!confirmDiscardEditor()) {
+      return;
+    }
+
+    setSelectedPromptId(prompt.id);
+    setView('detail');
   }
 
   function updateDraft(field: keyof PromptDraft, value: string | number) {
@@ -838,7 +922,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
     <main className="app-shell">
       <header className="app-header">
         <div className="app-header__inner">
-          <button type="button" onClick={() => setView('library')} className="brand-lockup">
+          <button type="button" onClick={() => requestView('library')} className="brand-lockup">
             <LogoMark />
             <span>Prompt Diary</span>
           </button>
@@ -913,10 +997,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
               }
               minRating={minRating}
               onMinRatingChange={setMinRating}
-              onOpen={(prompt) => {
-                setSelectedPromptId(prompt.id);
-                setView('detail');
-              }}
+              onOpen={openPromptDetail}
               onCopy={(prompt) => void copyPrompt(prompt)}
               onUse={(prompt) => setVariablePrompt(prompt)}
               onToggleFavorite={(prompt) => void changeFavorite(prompt)}
@@ -929,7 +1010,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
           )}
           {status === 'ready' && view === 'settings' && (
             <Settings
-              onBack={() => setView('library')}
+              onBack={() => requestView('library')}
               onExport={exportLibrary}
               onImport={importLibrary}
               onClearAll={() => void clearLibrary()}
@@ -939,14 +1020,14 @@ export default function App({ storage = defaultStorage }: AppProps) {
             <Examples
               examples={EXAMPLES}
               existingPrompts={prompts}
-              onBack={() => setView('library')}
+              onBack={() => requestView('library')}
               onAdd={(examples) => void importExamplePrompts(examples)}
             />
           )}
           {status === 'ready' && view === 'detail' && selectedPrompt && (
             <PromptDetail
               prompt={selectedPrompt}
-              onBack={() => setView('library')}
+              onBack={() => requestView('library')}
               onCopy={() => void copyPrompt(selectedPrompt)}
               onUse={() => setVariablePrompt(selectedPrompt)}
               onToggleFavorite={() => void changeFavorite(selectedPrompt)}
@@ -963,7 +1044,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
               </p>
               <button
                 type="button"
-                onClick={() => setView('library')}
+                onClick={() => requestView('library')}
                 className="button-secondary mt-4"
               >
                 Retour à la bibliothèque
@@ -979,7 +1060,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
               saving={saving}
               isEditing={Boolean(editingPromptId)}
               onChange={updateDraft}
-              onCancel={() => setView('library')}
+              onCancel={() => requestView('library')}
               onSubmit={() => void savePrompt()}
               onCopyPreview={() => void copyDraftPreview()}
             />
@@ -994,6 +1075,17 @@ export default function App({ storage = defaultStorage }: AppProps) {
         </footer>
       )}
       <Toast key={toastNonce} message={toast} />
+      {commandOpen && (
+        <CommandPalette
+          prompts={prompts}
+          onClose={() => setCommandOpen(false)}
+          onCreate={() => openEditor()}
+          onOpenPrompt={openPromptDetail}
+          onShowLibrary={() => requestView('library')}
+          onShowExamples={openExamples}
+          onShowSettings={openSettings}
+        />
+      )}
       {variablePrompt && (
         <VariableModal
           prompt={variablePrompt}

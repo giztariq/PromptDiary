@@ -367,8 +367,46 @@ describe('Prompt Diary prompt library', () => {
     expect(screen.getByRole('heading', { name: 'Vos prompts' })).toHaveFocus();
   });
 
+  it('opens the command palette and navigates to examples', async () => {
+    const user = userEvent.setup();
+    render(<App storage={createMemoryAdapter()} />);
+
+    await screen.findByText('Aucun prompt enregistré');
+    await user.keyboard('{Control>}k{/Control}');
+
+    const input = await screen.findByRole('combobox', {
+      name: 'Rechercher une commande ou un prompt',
+    });
+    expect(input).toHaveFocus();
+    await user.type(input, 'exemples');
+    await user.keyboard('{Enter}');
+
+    expect(await screen.findByRole('heading', { name: /Bibliothèque d.exemples/ })).toBeVisible();
+  });
+
+  it('asks before leaving an unsaved draft', async () => {
+    const user = userEvent.setup();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<App storage={createMemoryAdapter()} />);
+
+    await screen.findByText('Aucun prompt enregistré');
+    await user.click(screen.getByRole('button', { name: 'Nouveau prompt' }));
+    await user.type(screen.getByLabelText('Titre'), 'Brouillon non enregistré');
+    await user.keyboard('{Escape}');
+
+    expect(confirm).toHaveBeenCalledWith('Abandonner les modifications non enregistrées ?');
+    expect(screen.getByRole('heading', { name: 'Nouveau prompt' })).toBeVisible();
+
+    confirm.mockReturnValue(true);
+    await user.keyboard('{Escape}');
+
+    expect(await screen.findByText('Aucun prompt enregistré')).toBeVisible();
+    confirm.mockRestore();
+  });
+
   it('shows the quality coach while writing and opens the examples screen', async () => {
     const user = userEvent.setup();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     render(<App storage={createMemoryAdapter()} />);
 
     await screen.findByText('Aucun prompt enregistré');
@@ -383,6 +421,8 @@ describe('Prompt Diary prompt library', () => {
     expect(await screen.findByText('Qualité : 6/6')).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Exemples' }));
     expect(screen.getByRole('heading', { name: 'Exemples de prompts' })).toBeVisible();
+    expect(confirm).toHaveBeenCalledWith('Abandonner les modifications non enregistrées ?');
+    confirm.mockRestore();
   });
 
   it('filters the example library and imports one example with its source tag', async () => {
