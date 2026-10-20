@@ -3,3 +3,10 @@ dist
 coverage
 .git
 .gitignore
+.github
+.agents
+skills-lock.json
+.vscode
+docs
+00-METHODE.md
+*.log
