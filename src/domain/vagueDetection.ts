@@ -34,7 +34,7 @@ export function detectVaguePrompt(input: VaguePromptInput): VagueDetectionResult
     reasons.push('Aucun format de sortie demandé.');
   }
 
-  if (reasons.length === 0) {
+  if (reasons.length < 2) {
     return { vague: false, reasons: [], suggestion: '' };
   }
 

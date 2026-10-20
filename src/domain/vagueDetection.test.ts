@@ -21,6 +21,12 @@ describe('detectVaguePrompt', () => {
       vague: true,
     },
     {
+      label: 'contexte et consigne longue sans format explicite',
+      body: 'Analyse ce document pour préparer la réunion produit avec toutes les parties prenantes concernées en amont de la réunion.',
+      context: 'Réunion produit',
+      vague: false,
+    },
+    {
       label: 'rôle et format dans le corps',
       body: 'Tu es un analyste senior. Analyse ce document et réponds sous forme de tableau avec trois recommandations détaillées.',
       context: '',
