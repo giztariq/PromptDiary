@@ -29,6 +29,18 @@ describe('coach patches', () => {
   it('returns only the block when the prompt is empty', () => {
     expect(CONTEXT_PATCH.apply('')).toBe('Contexte : [situation, public, objectif].');
   });
+
+  it('is idempotent when the block is already present', () => {
+    const withRole = ROLE_PATCH.apply(vaguePrompt);
+    const withContext = CONTEXT_PATCH.apply(vaguePrompt);
+    const withFormat = FORMAT_PATCH.apply(vaguePrompt);
+    const withConstraints = CONSTRAINTS_PATCH.apply(vaguePrompt);
+
+    expect(ROLE_PATCH.apply(withRole)).toBe(withRole);
+    expect(CONTEXT_PATCH.apply(withContext)).toBe(withContext);
+    expect(FORMAT_PATCH.apply(withFormat)).toBe(withFormat);
+    expect(CONSTRAINTS_PATCH.apply(withConstraints)).toBe(withConstraints);
+  });
 });
 
 describe('analyzePrompt patches', () => {

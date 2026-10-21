@@ -118,12 +118,13 @@ Limites assumées : une bibliothèque par profil de navigateur, pas de comptes, 
 
 ## Parcours de démo (2 minutes)
 
-1. Ouvrir **Exemples**, puis **Tout ajouter**.
-2. Rechercher `analyse`, filtrer sur `5+`, ouvrir un prompt.
-3. Le copier : le toast confirme, le compteur et l'historique d'usage se mettent à jour.
-4. Utiliser un prompt à variables, remplir `{{client}}`, copier : les valeurs sont mémorisées à la réouverture.
-5. Créer un prompt vague et vérifier le badge **À préciser** et le coach qualité.
-6. Exporter la bibliothèque depuis **Réglages**, puis la réimporter.
+1. `Ctrl/Cmd + K` → taper `exemple` → **Entrée** : la bibliothèque s'ouvre en trois touches.
+2. Ouvrir **Exemples**, puis **Tout ajouter** : la bibliothèque se remplit.
+3. Créer un prompt vague : le coach affiche 2/6, **deux clics « Corriger »** le font passer à 5/6, puis copier.
+4. Créer un prompt avec `{{client}}` et `{{ton}}` : le badge « 2 variables » apparaît, **Utiliser** ouvre le formulaire, la copie est remplie.
+5. Rechercher `rlc` : « Relance client » est retrouvé et surligné. Filtrer ensuite sur la collection **Client Dupont**.
+6. Modifier un prompt, puis ouvrir son **Historique** et **Restaurer** une version.
+7. Exporter la bibliothèque depuis **Réglages**, puis la réimporter.
 
 ## Licence
 
