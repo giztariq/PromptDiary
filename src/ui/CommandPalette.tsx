@@ -11,6 +11,7 @@ interface CommandPaletteProps {
   onShowLibrary: () => void;
   onShowExamples: () => void;
   onShowSettings: () => void;
+  onShowStatistics: () => void;
 }
 
 interface PaletteItem {
@@ -35,6 +36,7 @@ export function CommandPalette({
   onShowLibrary,
   onShowExamples,
   onShowSettings,
+  onShowStatistics,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
@@ -59,6 +61,12 @@ export function CommandPalette({
       { id: 'library', label: 'Bibliothèque', hint: 'Prompts', run: onShowLibrary },
       { id: 'examples', label: 'Exemples', hint: 'Bibliothèque locale', run: onShowExamples },
       { id: 'settings', label: 'Réglages', hint: 'Import / export', run: onShowSettings },
+      {
+        id: 'statistics',
+        label: 'Statistiques',
+        hint: 'Vue d’ensemble',
+        run: onShowStatistics,
+      },
     ];
     const normalizedQuery = normalize(query.trim());
     const filteredCommands = commands.filter((command) =>
@@ -74,7 +82,16 @@ export function CommandPalette({
       }));
 
     return [...filteredCommands, ...promptResults];
-  }, [onCreate, onOpenPrompt, onShowExamples, onShowLibrary, onShowSettings, prompts, query]);
+  }, [
+    onCreate,
+    onOpenPrompt,
+    onShowExamples,
+    onShowLibrary,
+    onShowSettings,
+    onShowStatistics,
+    prompts,
+    query,
+  ]);
 
   useEffect(() => {
     setActiveIndex(0);

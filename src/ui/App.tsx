@@ -22,6 +22,7 @@ import { PromptCard } from './PromptCard';
 import { PromptDetail } from './PromptDetail';
 import { PromptSearch } from './PromptSearch';
 import { Settings } from './Settings';
+import { Statistics } from './Statistics';
 import { Toast } from './Toast';
 import { LogoMark } from './LogoMark';
 import { QualityCoach } from './QualityCoach';
@@ -33,7 +34,7 @@ interface AppProps {
 }
 
 type LibraryStatus = 'loading' | 'ready' | 'error';
-type AppView = 'library' | 'editor' | 'detail' | 'settings' | 'examples';
+type AppView = 'library' | 'editor' | 'detail' | 'settings' | 'examples' | 'statistics';
 
 const defaultStorage = createIndexedDbAdapter();
 
@@ -90,6 +91,7 @@ interface PromptLibraryProps {
   onCreate: () => void;
   onExamples: () => void;
   onSettings: () => void;
+  onStatistics: () => void;
   query: string;
   onQueryChange: (query: string) => void;
   tags: string[];
@@ -114,6 +116,7 @@ function PromptLibrary({
   onCreate,
   onExamples,
   onSettings,
+  onStatistics,
   query,
   onQueryChange,
   tags,
@@ -144,9 +147,14 @@ function PromptLibrary({
             Vos prompts
           </h2>
         </div>
-        <button type="button" onClick={onSettings} className="button-secondary">
-          Réglages
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={onStatistics} className="button-secondary">
+            Statistiques
+          </button>
+          <button type="button" onClick={onSettings} className="button-secondary">
+            Réglages
+          </button>
+        </div>
       </div>
 
       <PromptSearch
@@ -654,6 +662,16 @@ export default function App({ storage = defaultStorage }: AppProps) {
     setView('examples');
   }
 
+  function openStatistics() {
+    if (!confirmDiscardEditor()) {
+      return;
+    }
+
+    setSelectedPromptId(undefined);
+    setEditingPromptId(undefined);
+    setView('statistics');
+  }
+
   function openPromptDetail(prompt: Prompt) {
     if (!confirmDiscardEditor()) {
       return;
@@ -1006,6 +1024,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
               onCreate={() => openEditor()}
               onExamples={openExamples}
               onSettings={openSettings}
+              onStatistics={openStatistics}
               query={query}
               onQueryChange={setQuery}
               tags={tags}
@@ -1034,6 +1053,14 @@ export default function App({ storage = defaultStorage }: AppProps) {
                 setFavoritesOnly(false);
                 setSort('priority');
               }}
+            />
+          )}
+          {status === 'ready' && view === 'statistics' && (
+            <Statistics
+              prompts={prompts}
+              onOpenPrompt={openPromptDetail}
+              onBack={() => requestView('library')}
+              onCreate={() => openEditor()}
             />
           )}
           {status === 'ready' && view === 'settings' && (
@@ -1112,6 +1139,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
           onShowLibrary={() => requestView('library')}
           onShowExamples={openExamples}
           onShowSettings={openSettings}
+          onShowStatistics={openStatistics}
         />
       )}
       {variablePrompt && (

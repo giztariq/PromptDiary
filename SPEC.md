@@ -101,6 +101,14 @@ Consultant, formateur ou freelance qui utilise l'IA tous les jours et veut capit
 - En production, un service worker met l'application en cache après la première visite.
 - Un manifest PWA permet l'installation.
 
+### US12 — Statistiques locales
+
+- Les statistiques sont calculées à partir de la bibliothèque locale, sans aucun envoi de données.
+- Synthèse : nombre de prompts, copies totales, favoris, note moyenne, prompts sans tag, prompts à variables, prompts jamais copiés.
+- Classements : prompts les plus utilisés et tags les plus utilisés, avec accès direct au prompt depuis le classement.
+- La répartition des notes est affichée de 1 à 5.
+- Une bibliothèque vide affiche un état explicite qui invite à importer les exemples ou à créer un prompt.
+
 ## 5. Modèle de données
 
 ```ts
@@ -131,6 +139,7 @@ Stockage : base IndexedDB `prompt-diary`, version 2, stores `prompts` (clé `id`
 4. **Exemples** : bibliothèque filtrable, détail, import unitaire ou global.
 5. **Réglages** : export, import, garantie locale, effacement avec confirmation.
 6. **Palette de commandes** : `Ctrl/Cmd + K` pour créer, ouvrir un prompt, aller aux exemples ou aux réglages.
+7. **Statistiques** : synthèse, prompts les plus utilisés, tags les plus utilisés, répartition des notes, prompts jamais copiés.
 
 ## 7. Non-objectifs
 

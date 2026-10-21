@@ -185,6 +185,56 @@ describe('Prompt Diary prompt library', () => {
     expect(screen.queryByRole('heading', { name: 'Beta' })).not.toBeInTheDocument();
   });
 
+  it('shows local statistics and opens a top prompt from the ranking', async () => {
+    const user = userEvent.setup();
+    const topPrompt: Prompt = {
+      id: 'top',
+      title: 'Réponse client',
+      body: 'Rédige une réponse professionnelle.',
+      tags: ['email'],
+      model: 'GPT',
+      context: 'Email',
+      rating: 5,
+      favorite: true,
+      copyCount: 3,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+    };
+    const unusedPrompt: Prompt = {
+      ...topPrompt,
+      id: 'unused',
+      title: 'Brouillon jamais copié',
+      favorite: false,
+      rating: 2,
+      copyCount: 0,
+    };
+
+    render(<App storage={createMemoryAdapter([topPrompt, unusedPrompt])} />);
+    await screen.findByRole('heading', { name: 'Réponse client' });
+
+    await user.click(screen.getByRole('button', { name: 'Statistiques' }));
+
+    expect(await screen.findByRole('heading', { name: 'Statistiques' })).toBeVisible();
+    expect(screen.getByText('3,5 / 5')).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Les plus utilisés' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Jamais copiés' })).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: /Réponse client/ }));
+    expect(await screen.findByRole('heading', { name: 'Réponse client' })).toBeVisible();
+  });
+
+  it('explains that statistics need prompts', async () => {
+    const user = userEvent.setup();
+    render(<App storage={createMemoryAdapter()} />);
+
+    await screen.findByText('Aucun prompt enregistré');
+    await user.click(screen.getByRole('button', { name: 'Statistiques' }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Rien à mesurer pour l’instant' }),
+    ).toBeVisible();
+  });
+
   it('toggles a favorite and keeps favorites before other prompts', async () => {
     const user = userEvent.setup();
     const firstPrompt: Prompt = {

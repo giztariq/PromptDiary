@@ -29,6 +29,7 @@ function renderPalette(overrides: Partial<ComponentProps<typeof CommandPalette>>
     onShowLibrary: vi.fn(),
     onShowExamples: vi.fn(),
     onShowSettings: vi.fn(),
+    onShowStatistics: vi.fn(),
     ...overrides,
   };
 
@@ -87,6 +88,20 @@ describe('CommandPalette', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Aucune commande');
     await user.keyboard('{Escape}');
 
+    expect(props.onClose).toHaveBeenCalled();
+  });
+
+  it('runs the statistics command', async () => {
+    const user = userEvent.setup();
+    const props = renderPalette();
+
+    await user.type(
+      screen.getByRole('combobox', { name: 'Rechercher une commande ou un prompt' }),
+      'statistiques',
+    );
+    await user.keyboard('{Enter}');
+
+    expect(props.onShowStatistics).toHaveBeenCalledExactlyOnceWith();
     expect(props.onClose).toHaveBeenCalled();
   });
 });
