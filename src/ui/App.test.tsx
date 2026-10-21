@@ -235,6 +235,34 @@ describe('Prompt Diary prompt library', () => {
     ).toBeVisible();
   });
 
+  it('shows relative usage dates in the prompt detail', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date('2026-10-21T12:00:00.000Z'));
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const prompt: Prompt = {
+      id: 'dated',
+      title: 'Analyse de document',
+      body: 'Analyse ce document.',
+      tags: [],
+      model: '',
+      context: '',
+      rating: 4,
+      favorite: false,
+      copyCount: 2,
+      createdAt: '2026-10-01T12:00:00.000Z',
+      updatedAt: '2026-10-20T12:00:00.000Z',
+      lastUsedAt: '2026-10-21T09:00:00.000Z',
+    };
+
+    render(<App storage={createMemoryAdapter([prompt])} />);
+    await screen.findByRole('heading', { name: 'Analyse de document' });
+    await user.click(screen.getByRole('button', { name: 'Ouvrir Analyse de document' }));
+
+    expect(await screen.findByText('il y a 3 h')).toBeVisible();
+    expect(screen.getByText('il y a 1 j')).toBeVisible();
+    vi.useRealTimers();
+  });
+
   it('toggles a favorite and keeps favorites before other prompts', async () => {
     const user = userEvent.setup();
     const firstPrompt: Prompt = {
@@ -300,7 +328,7 @@ describe('Prompt Diary prompt library', () => {
     });
     expect(await screen.findByRole('status')).toHaveTextContent('Prompt copié');
     expect(screen.getByText('Historique d’utilisation (1)')).toBeVisible();
-    expect(screen.getByText(/Dernière utilisation le/)).toBeVisible();
+    expect(screen.getByText(/Dernière utilisation/)).toBeVisible();
   });
 
   it('fills a dynamic prompt, persists its values, and restores them when reopened', async () => {

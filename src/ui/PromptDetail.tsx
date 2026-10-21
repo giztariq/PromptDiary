@@ -1,4 +1,5 @@
 import type { Prompt } from '../domain/types';
+import { formatRelativeDate } from '../domain/format';
 import { parseVariables } from '../domain/variables';
 import { FavoriteButton } from './FavoriteButton';
 
@@ -147,13 +148,17 @@ export function PromptDetail({
         </span>
         {prompt.lastUsedAt && (
           <span className="text-muted">
-            Dernière utilisation le{' '}
-            <time dateTime={prompt.lastUsedAt}>{formatDate(prompt.lastUsedAt, true)}</time>
+            Dernière utilisation{' '}
+            <time dateTime={prompt.lastUsedAt} title={formatDate(prompt.lastUsedAt, true)}>
+              {formatRelativeDate(prompt.lastUsedAt)}
+            </time>
           </span>
         )}
         <span className="text-muted">
-          Mis à jour le{' '}
-          <time dateTime={prompt.updatedAt}>{formatDate(prompt.updatedAt, true)}</time>
+          Mis à jour{' '}
+          <time dateTime={prompt.updatedAt} title={formatDate(prompt.updatedAt, true)}>
+            {formatRelativeDate(prompt.updatedAt)}
+          </time>
         </span>
       </div>
 
@@ -168,7 +173,9 @@ export function PromptDetail({
               .reverse()
               .map((timestamp, index) => (
                 <li key={`${timestamp}-${index}`}>
-                  <time dateTime={timestamp}>{formatDate(timestamp, true)}</time>
+                  <time dateTime={timestamp} title={formatDate(timestamp, true)}>
+                    {formatRelativeDate(timestamp)}
+                  </time>
                 </li>
               ))}
           </ol>

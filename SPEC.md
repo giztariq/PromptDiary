@@ -74,6 +74,7 @@ Consultant, formateur ou freelance qui utilise l'IA tous les jours et veut capit
 ### US8 — Historique d'usage
 
 - Le détail affiche le nombre de copies, la dernière utilisation et les 5 dernières entrées de l'historique.
+- Les dates d'usage sont affichées en relatif (« il y a 3 h »), la date exacte restant accessible en infobulle.
 - L'historique est conservé lors d'une modification.
 - L'historique est exporté et réimporté.
 

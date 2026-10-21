@@ -16,7 +16,7 @@ Journal local-first de prompts : sauvegardez ce qui fonctionne, notez-le, retrou
 - **Palette de commandes** `Ctrl/Cmd + K` pour créer, ouvrir un prompt ou rejoindre une vue, avec navigation aux flèches.
 - **Garde-fou brouillon** : confirmation avant de quitter un prompt modifié, y compris à la fermeture de l'onglet.
 - **Filtres** par tags, note minimale et favoris, avec tri au choix (priorité, nouveautés, plus utilisés, mieux notés, titre A → Z).
-- **Historique d'usage** : 10 dernières utilisations conservées, 5 affichées dans le détail, compteur de copies.
+- **Historique d'usage** : 10 dernières utilisations conservées, 5 affichées dans le détail, compteur de copies, dates relatives (« il y a 3 h ») avec la date exacte en infobulle.
 - **Statistiques locales** : prompts, copies, favoris, note moyenne, prompts les plus utilisés, tags les plus utilisés, répartition des notes, prompts jamais copiés.
 - **12 exemples** prêts à importer, avec leur tag source.
 - **Import / export JSON** versionné, avec fusion sans doublon et reprise propre si un import échoue en cours de route.
