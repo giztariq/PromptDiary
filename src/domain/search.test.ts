@@ -96,6 +96,39 @@ describe('searchPrompts', () => {
     ]);
   });
 
+  it('keeps only favorites when the favorites filter is active', () => {
+    expect(searchPrompts(prompts, { favoritesOnly: true }).map((prompt) => prompt.id)).toEqual([
+      'mail',
+    ]);
+  });
+
+  it('combines the favorites filter with the other filters', () => {
+    expect(
+      searchPrompts(prompts, { favoritesOnly: true, minRating: 5 }).map((prompt) => prompt.id),
+    ).toEqual([]);
+    expect(
+      searchPrompts(prompts, { favoritesOnly: true, query: 'email' }).map((prompt) => prompt.id),
+    ).toEqual(['mail']);
+  });
+
+  it('applies the requested sort order', () => {
+    expect(searchPrompts(prompts, { sort: 'title' }).map((prompt) => prompt.id)).toEqual([
+      'analysis',
+      'strategy',
+      'mail',
+    ]);
+    expect(searchPrompts(prompts, { sort: 'usage' }).map((prompt) => prompt.id)).toEqual([
+      'analysis',
+      'mail',
+      'strategy',
+    ]);
+    expect(searchPrompts(prompts, { sort: 'rating' }).map((prompt) => prompt.id)).toEqual([
+      'analysis',
+      'strategy',
+      'mail',
+    ]);
+  });
+
   it('handles 500 prompts within the 50ms target', () => {
     const largeLibrary = Array.from({ length: 500 }, (_, index) => ({
       ...prompts[0],

@@ -369,6 +369,31 @@ kbd {
     opacity: 0.5;
   }
 
+  .filter-select {
+    width: auto;
+    min-height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-2);
+    padding: 4px 28px 4px 12px;
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 20px;
+    cursor: pointer;
+  }
+
+  .filter-select:hover {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+
+  .filter-select:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-ring);
+    outline: none;
+  }
+
   .prompt-card {
     position: relative;
     padding: 20px;

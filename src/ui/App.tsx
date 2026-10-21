@@ -5,6 +5,7 @@ import { recordUsage, toggleFavorite } from '../domain/promptActions';
 import { exportPrompts, mergePromptLibrary, parsePromptExport } from '../domain/importExport';
 import { importExamples } from '../domain/importExample';
 import { searchPrompts } from '../domain/search';
+import { type SortOption } from '../domain/sort';
 import {
   validatePromptDraft,
   type PromptDraft,
@@ -96,6 +97,10 @@ interface PromptLibraryProps {
   onToggleTag: (tag: string) => void;
   minRating: number;
   onMinRatingChange: (rating: number) => void;
+  favoritesOnly: boolean;
+  onFavoritesOnlyChange: (favoritesOnly: boolean) => void;
+  sort: SortOption;
+  onSortChange: (sort: SortOption) => void;
   onOpen: (prompt: Prompt) => void;
   onCopy: (prompt: Prompt) => void;
   onUse: (prompt: Prompt) => void;
@@ -116,6 +121,10 @@ function PromptLibrary({
   onToggleTag,
   minRating,
   onMinRatingChange,
+  favoritesOnly,
+  onFavoritesOnlyChange,
+  sort,
+  onSortChange,
   onOpen,
   onCopy,
   onUse,
@@ -148,6 +157,10 @@ function PromptLibrary({
         onToggleTag={onToggleTag}
         minRating={minRating}
         onMinRatingChange={onMinRatingChange}
+        favoritesOnly={favoritesOnly}
+        onFavoritesOnlyChange={onFavoritesOnlyChange}
+        sort={sort}
+        onSortChange={onSortChange}
       />
 
       {prompts.length === 0 ? (
@@ -435,6 +448,8 @@ export default function App({ storage = defaultStorage }: AppProps) {
   const [query, setQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [minRating, setMinRating] = useState(0);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [sort, setSort] = useState<SortOption>('priority');
   const [toast, setToast] = useState('');
   const [toastNonce, setToastNonce] = useState(0);
   const [draft, setDraft] = useState<PromptDraft>(emptyDraft);
@@ -465,8 +480,15 @@ export default function App({ storage = defaultStorage }: AppProps) {
     [prompts],
   );
   const visiblePrompts = useMemo(
-    () => searchPrompts(prompts, { query, tags: selectedTags, minRating: minRating || undefined }),
-    [minRating, prompts, query, selectedTags],
+    () =>
+      searchPrompts(prompts, {
+        query,
+        tags: selectedTags,
+        minRating: minRating || undefined,
+        favoritesOnly,
+        sort,
+      }),
+    [favoritesOnly, minRating, prompts, query, selectedTags, sort],
   );
   const selectedPrompt = prompts.find((prompt) => prompt.id === selectedPromptId);
   const variableNames = useMemo(
@@ -997,6 +1019,10 @@ export default function App({ storage = defaultStorage }: AppProps) {
               }
               minRating={minRating}
               onMinRatingChange={setMinRating}
+              favoritesOnly={favoritesOnly}
+              onFavoritesOnlyChange={setFavoritesOnly}
+              sort={sort}
+              onSortChange={setSort}
               onOpen={openPromptDetail}
               onCopy={(prompt) => void copyPrompt(prompt)}
               onUse={(prompt) => setVariablePrompt(prompt)}
@@ -1005,6 +1031,8 @@ export default function App({ storage = defaultStorage }: AppProps) {
                 setQuery('');
                 setSelectedTags([]);
                 setMinRating(0);
+                setFavoritesOnly(false);
+                setSort('priority');
               }}
             />
           )}

@@ -29,6 +29,8 @@ Consultant, formateur ou freelance qui utilise l'IA tous les jours et veut capit
 
 - Recherche insensible à la casse et aux accents sur le titre, le corps, les tags, le modèle et le contexte.
 - Filtres par tags et note minimale combinables.
+- Filtre « favoris uniquement » combinable avec les autres filtres.
+- Tri explicite : priorité, nouveautés, les plus utilisés, mieux notés, titre A → Z.
 - Les favoris remontent avant les autres prompts, puis le tri par priorité d'usage s'applique.
 - Résultats en moins de 50 ms sur 500 prompts (test de performance).
 - Les occurrences sont surlignées sans casser les accents ni traiter les caractères regex littéralement.

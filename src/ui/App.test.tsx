@@ -143,6 +143,48 @@ describe('Prompt Diary prompt library', () => {
     expect(screen.queryByRole('heading', { name: 'Réponse client' })).not.toBeInTheDocument();
   });
 
+  it('filters favorites only and sorts the library by title', async () => {
+    const user = userEvent.setup();
+    const alphaPrompt: Prompt = {
+      id: 'alpha',
+      title: 'Alpha',
+      body: 'Première formulation.',
+      tags: [],
+      model: '',
+      context: '',
+      rating: 4,
+      favorite: true,
+      copyCount: 1,
+      createdAt: '2026-10-01T10:00:00.000Z',
+      updatedAt: '2026-10-02T10:00:00.000Z',
+    };
+    const betaPrompt: Prompt = {
+      id: 'beta',
+      title: 'Beta',
+      body: 'Deuxième formulation.',
+      tags: [],
+      model: '',
+      context: '',
+      rating: 5,
+      favorite: false,
+      copyCount: 3,
+      createdAt: '2026-10-01T10:00:00.000Z',
+      updatedAt: '2026-10-03T10:00:00.000Z',
+    };
+
+    render(<App storage={createMemoryAdapter([betaPrompt, alphaPrompt])} />);
+    expect(await screen.findByRole('heading', { name: 'Alpha' })).toBeVisible();
+
+    await user.selectOptions(screen.getByLabelText('Trier par'), 'title');
+    expect(
+      screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent),
+    ).toEqual(['Alpha', 'Beta']);
+
+    await user.click(screen.getByRole('button', { name: 'Favoris' }));
+    expect(screen.getByRole('heading', { name: 'Alpha' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Beta' })).not.toBeInTheDocument();
+  });
+
   it('toggles a favorite and keeps favorites before other prompts', async () => {
     const user = userEvent.setup();
     const firstPrompt: Prompt = {

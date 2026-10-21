@@ -1,3 +1,5 @@
+import { SORT_OPTIONS, type SortOption } from '../domain/sort';
+
 interface PromptSearchProps {
   query: string;
   onQueryChange: (query: string) => void;
@@ -6,6 +8,10 @@ interface PromptSearchProps {
   onToggleTag: (tag: string) => void;
   minRating: number;
   onMinRatingChange: (rating: number) => void;
+  favoritesOnly: boolean;
+  onFavoritesOnlyChange: (favoritesOnly: boolean) => void;
+  sort: SortOption;
+  onSortChange: (sort: SortOption) => void;
 }
 
 export function PromptSearch({
@@ -16,6 +22,10 @@ export function PromptSearch({
   onToggleTag,
   minRating,
   onMinRatingChange,
+  favoritesOnly,
+  onFavoritesOnlyChange,
+  sort,
+  onSortChange,
 }: PromptSearchProps) {
   return (
     <div className="search-panel space-y-3">
@@ -58,6 +68,14 @@ export function PromptSearch({
             </button>
           );
         })}
+        <button
+          type="button"
+          aria-pressed={favoritesOnly}
+          onClick={() => onFavoritesOnlyChange(!favoritesOnly)}
+          className="filter-chip"
+        >
+          Favoris
+        </button>
         <span className="ml-auto text-xs font-semibold uppercase tracking-[0.12em] text-muted">
           Note minimale
         </span>
@@ -73,6 +91,26 @@ export function PromptSearch({
             {rating === 0 ? 'Toutes' : `${rating}+`}
           </button>
         ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <label
+          htmlFor="prompt-sort"
+          className="text-xs font-semibold uppercase tracking-[0.12em] text-muted"
+        >
+          Trier par
+        </label>
+        <select
+          id="prompt-sort"
+          value={sort}
+          onChange={(event) => onSortChange(event.target.value as SortOption)}
+          className="filter-select"
+        >
+          {SORT_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
     </div>
   );
