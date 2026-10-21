@@ -14,6 +14,7 @@ import { recordUsage, toggleFavorite } from '../domain/promptActions';
 import { exportPrompts, mergePromptLibrary, parsePromptExport } from '../domain/importExport';
 import { importExamples } from '../domain/importExample';
 import { findSimilarPrompts } from '../domain/similarity';
+import { dismissPrompt, findStalePrompts, type StalePrompt } from '../domain/reminders';
 import { createVersions, hasContentChanged, restoreVersion } from '../domain/versions';
 import { searchPrompts } from '../domain/search';
 import { type SortOption } from '../domain/sort';
@@ -64,6 +65,7 @@ const emptyDraft: PromptDraft = {
 };
 
 const NEW_COLLECTION_OPTION = '__new_collection__';
+const REMINDERS_KEY = 'reminders';
 
 function draftSnapshot(draft: PromptDraft, tagsValue: string): string {
   return JSON.stringify([
@@ -114,6 +116,9 @@ interface PromptLibraryProps {
   onManageCollections: () => void;
   favoritesCount: number;
   unassignedCount: number;
+  stalePrompt?: StalePrompt;
+  onUseStale: (prompt: Prompt) => void;
+  onDismissStale: (promptId: string) => void;
   onCreate: () => void;
   onExamples: () => void;
   onSettings: () => void;
@@ -148,6 +153,9 @@ function PromptLibrary({
   onManageCollections,
   favoritesCount,
   unassignedCount,
+  stalePrompt,
+  onUseStale,
+  onDismissStale,
   onCreate,
   onExamples,
   onSettings,
@@ -256,6 +264,30 @@ function PromptLibrary({
           </div>
         ) : (
           <div>
+            {stalePrompt && (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-control border border-border bg-surface-2 p-4">
+                <p className="text-sm text-ink">
+                  Tu n’as pas utilisé « {stalePrompt.prompt.title} » depuis {stalePrompt.days}{' '}
+                  jours.
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onUseStale(stalePrompt.prompt)}
+                    className="button-secondary text-xs"
+                  >
+                    Utiliser
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDismissStale(stalePrompt.prompt.id)}
+                    className="button-quiet text-xs"
+                  >
+                    Plus tard
+                  </button>
+                </div>
+              </div>
+            )}
             <p className="mb-4 text-sm text-muted">
               {prompts.length} résultat{prompts.length === 1 ? '' : 's'}
             </p>
@@ -668,6 +700,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
   const [sort, setSort] = useState<SortOption>('priority');
   const [collectionFilter, setCollectionFilter] = useState<CollectionFilter>({ kind: 'all' });
   const [collectionsOpen, setCollectionsOpen] = useState(false);
+  const [dismissedReminders, setDismissedReminders] = useState<Record<string, string>>({});
   const [toast, setToast] = useState('');
   const [toastNonce, setToastNonce] = useState(0);
   const [draft, setDraft] = useState<PromptDraft>(emptyDraft);
@@ -693,6 +726,10 @@ export default function App({ storage = defaultStorage }: AppProps) {
 
   const tags = useMemo(() => rankTags(prompts).map((entry) => entry.tag), [prompts]);
   const collections = useMemo(() => listCollections(prompts), [prompts]);
+  const stalePrompt = useMemo(
+    () => findStalePrompts(prompts, dismissedReminders)[0],
+    [dismissedReminders, prompts],
+  );
   const visiblePrompts = useMemo(
     () =>
       searchPrompts(prompts, {
@@ -760,6 +797,23 @@ export default function App({ storage = defaultStorage }: AppProps) {
       active = false;
     };
   }, [loadAttempt, storage]);
+
+  useEffect(() => {
+    let active = true;
+
+    void storage
+      .getValue(REMINDERS_KEY)
+      .then((stored) => {
+        if (active && stored) {
+          setDismissedReminders(stored);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, [storage]);
 
   useEffect(() => {
     if (!isEditorDirty) {
@@ -1077,6 +1131,17 @@ export default function App({ storage = defaultStorage }: AppProps) {
     }
   }
 
+  async function dismissStalePrompt(promptId: string) {
+    const updated = dismissPrompt(promptId, dismissedReminders);
+    setDismissedReminders(updated);
+
+    try {
+      await storage.setValue(REMINDERS_KEY, updated);
+    } catch {
+      showToast('Impossible de mémoriser la relance.');
+    }
+  }
+
   async function renameCollectionAction(from: string, to: string) {
     const target = to.trim();
 
@@ -1222,6 +1287,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
     };
     delete duplicate.lastUsedAt;
     delete duplicate.usageLog;
+    delete duplicate.versions;
 
     try {
       await storage.save(duplicate);
@@ -1330,6 +1396,9 @@ export default function App({ storage = defaultStorage }: AppProps) {
               onManageCollections={() => setCollectionsOpen(true)}
               favoritesCount={countFavorites(prompts)}
               unassignedCount={countWithoutCollection(prompts)}
+              stalePrompt={stalePrompt}
+              onUseStale={(prompt) => void copyPrompt(prompt)}
+              onDismissStale={(promptId) => void dismissStalePrompt(promptId)}
               onCreate={() => openEditor()}
               onExamples={openExamples}
               onSettings={openSettings}

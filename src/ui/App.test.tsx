@@ -532,6 +532,39 @@ describe('Prompt Diary prompt library', () => {
     expect(stored[0].versions?.[0].title).toBe('Deuxième version');
   });
 
+  it('suggests a prompt that has not been used for thirty days', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    const stalePrompt: Prompt = {
+      id: 'stale',
+      title: 'Analyse SWOT',
+      body: 'Analyse les forces et faiblesses.',
+      tags: [],
+      model: '',
+      context: '',
+      rating: 4,
+      favorite: false,
+      copyCount: 2,
+      createdAt: '2026-06-01T12:00:00.000Z',
+      updatedAt: '2026-06-01T12:00:00.000Z',
+      lastUsedAt: '2026-06-15T12:00:00.000Z',
+    };
+
+    render(<App storage={createMemoryAdapter([stalePrompt])} />);
+    await screen.findByRole('heading', { name: 'Analyse SWOT' });
+
+    expect(await screen.findByText(/Tu n’as pas utilisé « Analyse SWOT » depuis/)).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Plus tard' }));
+    await waitFor(() => {
+      expect(screen.queryByText(/Tu n’as pas utilisé/)).not.toBeInTheDocument();
+    });
+  });
+
   it('toggles a favorite and keeps favorites before other prompts', async () => {
     const user = userEvent.setup();
     const firstPrompt: Prompt = {

@@ -148,6 +148,11 @@ Consultant, formateur ou freelance qui utilise l'IA tous les jours et veut capit
 - Le détail affiche un historique repliable : date, extrait et bouton « Restaurer ».
 - Restaurer une version repousse d'abord l'état courant dans l'historique et confirme par un toast.
 
+### US17 — Relance des prompts oubliés
+
+- Un prompt utilisé il y a plus de 30 jours et non réutilisé depuis propose une relance discrète en tête de bibliothèque.
+- La relance propose « Utiliser » (copie le prompt) et « Plus tard » (masquage pendant 7 jours, mémorisé localement).
+
 ## 5. Modèle de données
 
 ```ts
