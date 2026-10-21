@@ -25,9 +25,9 @@ Journal local-first de prompts : sauvegardez ce qui fonctionne, notez-le, retrou
 - **Accessibilité AA** : navigation clavier, focus visibles, modale avec piège de focus, contrastes vérifiés.
 - **Installable et hors ligne** après la première visite (manifest + service worker en production).
 
-| Détail et historique d'usage                       | Éditeur et coach qualité                          |
-| -------------------------------------------------- | ------------------------------------------------- |
-| ![Détail d'un prompt](docs/screenshots/detail.png) | ![Éditeur de prompt](docs/screenshots/editor.png) |
+| Détail et historique d'usage                       | Éditeur et coach qualité                          | Statistiques locales                        |
+| -------------------------------------------------- | ------------------------------------------------- | ------------------------------------------- |
+| ![Détail d'un prompt](docs/screenshots/detail.png) | ![Éditeur de prompt](docs/screenshots/editor.png) | ![Statistiques](docs/screenshots/stats.png) |
 
 ## Démarrage
 
