@@ -72,6 +72,27 @@ describe('PromptSearch filters', () => {
     expect(props.onFavoritesOnlyChange).toHaveBeenCalledExactlyOnceWith(true);
   });
 
+  it('folds the tag list and expands it on demand', async () => {
+    const user = userEvent.setup();
+    const tags = Array.from({ length: 15 }, (_, index) => `tag-${index + 1}`);
+    const props = { ...buildProps(), tags };
+    render(<PromptSearch {...props} />);
+
+    expect(screen.getByRole('button', { name: 'Tag : #tag-12' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Tag : #tag-13' })).not.toBeInTheDocument();
+
+    const expandButton = screen.getByRole('button', { name: '+3 tags' });
+    expect(expandButton).toHaveAttribute('aria-expanded', 'false');
+    await user.click(expandButton);
+
+    expect(screen.getByRole('button', { name: 'Tag : #tag-15' })).toBeVisible();
+    const collapseButton = screen.getByRole('button', { name: 'Réduire' });
+    expect(collapseButton).toHaveAttribute('aria-expanded', 'true');
+    await user.click(collapseButton);
+
+    expect(screen.queryByRole('button', { name: 'Tag : #tag-15' })).not.toBeInTheDocument();
+  });
+
   it('exposes the sort options in a labelled select', async () => {
     const user = userEvent.setup();
     const props = buildProps();

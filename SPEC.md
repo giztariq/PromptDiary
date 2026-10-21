@@ -29,6 +29,7 @@ Consultant, formateur ou freelance qui utilise l'IA tous les jours et veut capit
 
 - Recherche insensible à la casse et aux accents sur le titre, le corps, les tags, le modèle et le contexte.
 - Filtres par tags et note minimale combinables.
+- Les filtres de tags sont classés par usage, puis repliés au-delà de 12 tags avec un bouton d'expansion.
 - Filtre « favoris uniquement » combinable avec les autres filtres.
 - Tri explicite : priorité, nouveautés, les plus utilisés, mieux notés, titre A → Z.
 - Les favoris remontent avant les autres prompts, puis le tri par priorité d'usage s'applique.

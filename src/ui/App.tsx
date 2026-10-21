@@ -6,6 +6,7 @@ import { exportPrompts, mergePromptLibrary, parsePromptExport } from '../domain/
 import { importExamples } from '../domain/importExample';
 import { searchPrompts } from '../domain/search';
 import { type SortOption } from '../domain/sort';
+import { rankTags } from '../domain/tags';
 import {
   validatePromptDraft,
   type PromptDraft,
@@ -480,13 +481,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
     document.getElementById(`${view}-heading`)?.focus();
   }, [view]);
 
-  const tags = useMemo(
-    () =>
-      [...new Set(prompts.flatMap((prompt) => prompt.tags))].sort((left, right) =>
-        left.localeCompare(right),
-      ),
-    [prompts],
-  );
+  const tags = useMemo(() => rankTags(prompts).map((entry) => entry.tag), [prompts]);
   const visiblePrompts = useMemo(
     () =>
       searchPrompts(prompts, {

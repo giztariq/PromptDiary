@@ -263,6 +263,37 @@ describe('Prompt Diary prompt library', () => {
     vi.useRealTimers();
   });
 
+  it('orders the tag filters by usage', async () => {
+    const basePrompt: Prompt = {
+      id: 'base',
+      title: 'Analyse de document',
+      body: 'Analyse ce document.',
+      tags: ['rare'],
+      model: '',
+      context: '',
+      rating: 4,
+      favorite: false,
+      copyCount: 0,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+    };
+    const commonPrompt: Prompt = {
+      ...basePrompt,
+      id: 'common',
+      title: 'Réponse client',
+      tags: ['fréquent'],
+    };
+
+    render(<App storage={createMemoryAdapter([basePrompt, commonPrompt])} />);
+    await screen.findByRole('heading', { name: 'Analyse de document' });
+
+    const tagButtons = screen.getAllByRole('button', { name: /^Tag : #/ });
+    expect(tagButtons.map((button) => button.getAttribute('aria-label'))).toEqual([
+      'Tag : #fréquent',
+      'Tag : #rare',
+    ]);
+  });
+
   it('toggles a favorite and keeps favorites before other prompts', async () => {
     const user = userEvent.setup();
     const firstPrompt: Prompt = {

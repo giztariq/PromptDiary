@@ -1,4 +1,8 @@
+import { useState } from 'react';
+
 import { SORT_OPTIONS, type SortOption } from '../domain/sort';
+
+const MAX_VISIBLE_TAGS = 12;
 
 interface PromptSearchProps {
   query: string;
@@ -27,6 +31,10 @@ export function PromptSearch({
   sort,
   onSortChange,
 }: PromptSearchProps) {
+  const [tagsExpanded, setTagsExpanded] = useState(false);
+  const visibleTags = tagsExpanded ? tags : tags.slice(0, MAX_VISIBLE_TAGS);
+  const hiddenTagCount = tags.length - visibleTags.length;
+
   return (
     <div className="search-panel space-y-3">
       <div className="relative">
@@ -52,7 +60,7 @@ export function PromptSearch({
         role="group"
         aria-label="Filtrer les prompts"
       >
-        {tags.map((tag) => {
+        {visibleTags.map((tag) => {
           const selected = selectedTags.includes(tag);
           return (
             <button
@@ -68,6 +76,26 @@ export function PromptSearch({
             </button>
           );
         })}
+        {hiddenTagCount > 0 && (
+          <button
+            type="button"
+            aria-expanded="false"
+            onClick={() => setTagsExpanded(true)}
+            className="filter-chip"
+          >
+            +{hiddenTagCount} tag{hiddenTagCount === 1 ? '' : 's'}
+          </button>
+        )}
+        {tagsExpanded && tags.length > MAX_VISIBLE_TAGS && (
+          <button
+            type="button"
+            aria-expanded="true"
+            onClick={() => setTagsExpanded(false)}
+            className="filter-chip"
+          >
+            Réduire
+          </button>
+        )}
         <button
           type="button"
           aria-pressed={favoritesOnly}
