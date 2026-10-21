@@ -170,7 +170,6 @@ export function CommandPalette({
     return { actions: matchingActions, promptEntries: promptItems };
   }, [
     onCreate,
-    onEditPrompt,
     onExportLibrary,
     onImportLibrary,
     onShowExamples,

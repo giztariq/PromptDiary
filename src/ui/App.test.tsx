@@ -180,7 +180,7 @@ describe('Prompt Diary prompt library', () => {
       screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent),
     ).toEqual(['Alpha', 'Beta']);
 
-    await user.click(screen.getByRole('button', { name: 'Favoris' }));
+    await user.click(screen.getByRole('button', { name: /^Favoris/ }));
     expect(screen.getByRole('heading', { name: 'Alpha' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Beta' })).not.toBeInTheDocument();
   });
@@ -355,6 +355,71 @@ describe('Prompt Diary prompt library', () => {
 
     expect(await screen.findByRole('status')).toHaveTextContent('Prompt copié');
     await screen.findByText('copié 1×');
+  });
+
+  it('assigns a collection from the editor and filters the library with it', async () => {
+    const user = userEvent.setup();
+    const adapter = createMemoryAdapter();
+    render(<App storage={adapter} />);
+
+    await screen.findByText('Aucun prompt enregistré');
+    await user.click(screen.getByRole('button', { name: 'Nouveau prompt' }));
+    await user.type(screen.getByLabelText('Titre'), 'Relance client');
+    await user.type(screen.getByLabelText('Corps du prompt'), 'Relance le client.');
+    await user.selectOptions(screen.getByLabelText('Note'), '4');
+    await user.selectOptions(screen.getByLabelText('Collection'), 'Nouvelle collection…');
+    await user.type(screen.getByLabelText('Nom de la nouvelle collection'), 'Client Dupont');
+    await user.keyboard('{Enter}');
+    await user.click(screen.getByRole('button', { name: 'Enregistrer le prompt' }));
+
+    expect(await screen.findByRole('heading', { name: 'Relance client' })).toBeVisible();
+    expect(screen.getAllByText('Client Dupont').length).toBeGreaterThan(0);
+
+    const collectionButton = screen.getByRole('button', { name: /^Client Dupont/ });
+    expect(collectionButton).toHaveAttribute('aria-pressed', 'false');
+    await user.click(collectionButton);
+
+    expect(collectionButton).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('heading', { name: 'Relance client' })).toBeVisible();
+  });
+
+  it('renames a collection for every prompt and detaches it on delete', async () => {
+    const user = userEvent.setup();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const prompt: Prompt = {
+      id: 'client',
+      title: 'Relance client',
+      body: 'Relance le client.',
+      tags: [],
+      model: '',
+      context: '',
+      rating: 4,
+      favorite: false,
+      copyCount: 0,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+      collection: 'Client Dupont',
+    };
+    const adapter = createMemoryAdapter([prompt]);
+    render(<App storage={adapter} />);
+
+    await screen.findByRole('heading', { name: 'Relance client' });
+    await user.click(screen.getByRole('button', { name: 'Gérer les collections' }));
+
+    const input = await screen.findByLabelText(/Client Dupont/);
+    await user.clear(input);
+    await user.type(input, 'Client Durand');
+    await user.click(screen.getByRole('button', { name: 'Renommer' }));
+
+    await screen.findByText(/Collection « Client Dupont » renommée/);
+    expect(screen.getByRole('button', { name: /^Client Durand/ })).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Supprimer' }));
+    await screen.findByText(/Collection « Client Durand » supprimée/);
+
+    expect(screen.queryByRole('button', { name: /^Client Durand/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Relance client' })).toBeVisible();
+    confirm.mockRestore();
   });
 
   it('toggles a favorite and keeps favorites before other prompts', async () => {

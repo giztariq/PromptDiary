@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { createPromptFromDraft } from '../domain/promptCreation';
+import {
+  countFavorites,
+  countWithoutCollection,
+  listCollections,
+  removeCollection,
+  renameCollection,
+  type CollectionCount,
+  type CollectionFilter,
+} from '../domain/collections';
 import { recordUsage, toggleFavorite } from '../domain/promptActions';
 import { exportPrompts, mergePromptLibrary, parsePromptExport } from '../domain/importExport';
 import { importExamples } from '../domain/importExample';
@@ -20,6 +29,8 @@ import { EXAMPLES, type Example } from '../data/examples';
 import { createIndexedDbAdapter } from '../storage/indexedDbAdapter';
 import { variableValuesKey, type StorageAdapter } from '../storage/storageAdapter';
 import { CommandPalette } from './CommandPalette';
+import { CollectionSidebar } from './CollectionSidebar';
+import { CollectionsDialog } from './CollectionsDialog';
 import { PromptCard } from './PromptCard';
 import { PromptDetail } from './PromptDetail';
 import { PromptSearch } from './PromptSearch';
@@ -47,7 +58,10 @@ const emptyDraft: PromptDraft = {
   model: '',
   context: '',
   rating: 0,
+  collection: '',
 };
+
+const NEW_COLLECTION_OPTION = '__new_collection__';
 
 function draftSnapshot(draft: PromptDraft, tagsValue: string): string {
   return JSON.stringify([
@@ -57,6 +71,7 @@ function draftSnapshot(draft: PromptDraft, tagsValue: string): string {
     draft.model,
     draft.context,
     draft.rating,
+    draft.collection,
     tagsValue,
   ]);
 }
@@ -90,6 +105,13 @@ function readFileText(file: File): Promise<string> {
 interface PromptLibraryProps {
   prompts: Prompt[];
   hasPrompts: boolean;
+  totalCount: number;
+  collections: CollectionCount[];
+  collectionFilter: CollectionFilter;
+  onSelectCollection: (filter: CollectionFilter) => void;
+  onManageCollections: () => void;
+  favoritesCount: number;
+  unassignedCount: number;
   onCreate: () => void;
   onExamples: () => void;
   onSettings: () => void;
@@ -101,8 +123,6 @@ interface PromptLibraryProps {
   onToggleTag: (tag: string) => void;
   minRating: number;
   onMinRatingChange: (rating: number) => void;
-  favoritesOnly: boolean;
-  onFavoritesOnlyChange: (favoritesOnly: boolean) => void;
   sort: SortOption;
   onSortChange: (sort: SortOption) => void;
   onOpen: (prompt: Prompt) => void;
@@ -115,6 +135,13 @@ interface PromptLibraryProps {
 function PromptLibrary({
   prompts,
   hasPrompts,
+  totalCount,
+  collections,
+  collectionFilter,
+  onSelectCollection,
+  onManageCollections,
+  favoritesCount,
+  unassignedCount,
   onCreate,
   onExamples,
   onSettings,
@@ -126,8 +153,6 @@ function PromptLibrary({
   onToggleTag,
   minRating,
   onMinRatingChange,
-  favoritesOnly,
-  onFavoritesOnlyChange,
   sort,
   onSortChange,
   onOpen,
@@ -167,60 +192,70 @@ function PromptLibrary({
         onToggleTag={onToggleTag}
         minRating={minRating}
         onMinRatingChange={onMinRatingChange}
-        favoritesOnly={favoritesOnly}
-        onFavoritesOnlyChange={onFavoritesOnlyChange}
         sort={sort}
         onSortChange={onSortChange}
       />
 
-      {prompts.length === 0 ? (
-        <div className="state-card empty-state">
-          {hasPrompts ? (
-            <>
-              <h3 className="text-base font-semibold">Aucun résultat</h3>
-              <p className="mt-2 text-sm text-muted">Modifiez votre recherche ou vos filtres.</p>
-              <button type="button" onClick={onClearFilters} className="button-secondary mt-4">
-                Réinitialiser les filtres
-              </button>
-            </>
-          ) : (
-            <div className="empty-state__content">
-              <LogoMark size={40} />
-              <p className="eyebrow mt-5">Aucun prompt enregistré</p>
-              <h3 className="mt-2 text-2xl font-semibold">Votre carnet de prompts</h3>
-              <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted">
-                Gardez vos meilleures formulations à portée de main, notez ce qui fonctionne et
-                réutilisez-les sans repartir de zéro.
-              </p>
-              <div className="mt-6 flex flex-wrap justify-center gap-3">
-                <button type="button" onClick={onCreate} className="button-primary">
-                  Créer un prompt
+      <div className="mt-6 grid gap-6 lg:grid-cols-[200px_1fr]">
+        <CollectionSidebar
+          collections={collections}
+          active={collectionFilter}
+          onSelect={onSelectCollection}
+          onManage={onManageCollections}
+          totalCount={totalCount}
+          favoritesCount={favoritesCount}
+          unassignedCount={unassignedCount}
+        />
+
+        {prompts.length === 0 ? (
+          <div className="state-card empty-state">
+            {hasPrompts ? (
+              <>
+                <h3 className="text-base font-semibold">Aucun résultat</h3>
+                <p className="mt-2 text-sm text-muted">Modifiez votre recherche ou vos filtres.</p>
+                <button type="button" onClick={onClearFilters} className="button-secondary mt-4">
+                  Réinitialiser les filtres
                 </button>
-                <button type="button" onClick={onExamples} className="button-secondary">
-                  Explorer les exemples
-                </button>
+              </>
+            ) : (
+              <div className="empty-state__content">
+                <LogoMark size={40} />
+                <p className="eyebrow mt-5">Aucun prompt enregistré</p>
+                <h3 className="mt-2 text-2xl font-semibold">Votre carnet de prompts</h3>
+                <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted">
+                  Gardez vos meilleures formulations à portée de main, notez ce qui fonctionne et
+                  réutilisez-les sans repartir de zéro.
+                </p>
+                <div className="mt-6 flex flex-wrap justify-center gap-3">
+                  <button type="button" onClick={onCreate} className="button-primary">
+                    Créer un prompt
+                  </button>
+                  <button type="button" onClick={onExamples} className="button-secondary">
+                    Explorer les exemples
+                  </button>
+                </div>
+                <p className="mt-8 border-t border-border pt-4 text-xs text-muted">
+                  Tout est local, rien ne part sur un serveur.
+                </p>
               </div>
-              <p className="mt-8 border-t border-border pt-4 text-xs text-muted">
-                Tout est local, rien ne part sur un serveur.
-              </p>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="mt-6 grid gap-4" aria-label="Liste des prompts">
-          {prompts.map((prompt) => (
-            <PromptCard
-              key={prompt.id}
-              prompt={prompt}
-              onOpen={() => onOpen(prompt)}
-              onCopy={() => onCopy(prompt)}
-              onUse={() => onUse(prompt)}
-              onToggleFavorite={() => onToggleFavorite(prompt)}
-              query={query}
-            />
-          ))}
-        </div>
-      )}
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-4" aria-label="Liste des prompts">
+            {prompts.map((prompt) => (
+              <PromptCard
+                key={prompt.id}
+                prompt={prompt}
+                onOpen={() => onOpen(prompt)}
+                onCopy={() => onCopy(prompt)}
+                onUse={() => onUse(prompt)}
+                onToggleFavorite={() => onToggleFavorite(prompt)}
+                query={query}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
@@ -232,6 +267,7 @@ interface PromptEditorProps {
   saveError: string;
   saving: boolean;
   isEditing: boolean;
+  collections: CollectionCount[];
   onChange: (field: keyof PromptDraft, value: string | number) => void;
   onCancel: () => void;
   onSubmit: () => void;
@@ -246,6 +282,7 @@ function PromptEditor({
   saveError,
   saving,
   isEditing,
+  collections,
   onChange,
   onCancel,
   onSubmit,
@@ -255,6 +292,19 @@ function PromptEditor({
   const detection = detectVaguePrompt(draft);
   const variables = parseVariables(draft.body);
   const [undoBody, setUndoBody] = useState<string | null>(null);
+  const [newCollection, setNewCollection] = useState<string | null>(null);
+
+  const collectionOptions = useMemo(() => {
+    const names = new Set(collections.map((collection) => collection.name));
+
+    if (draft.collection) {
+      names.add(draft.collection);
+    }
+
+    return [...names].sort((left, right) =>
+      left.localeCompare(right, 'fr', { sensitivity: 'base' }),
+    );
+  }, [collections, draft.collection]);
 
   function handleFieldChange(field: keyof PromptDraft, value: string | number) {
     if (field === 'body') {
@@ -262,6 +312,26 @@ function PromptEditor({
     }
 
     onChange(field, value);
+  }
+
+  function handleCollectionChange(value: string) {
+    if (value === NEW_COLLECTION_OPTION) {
+      setNewCollection('');
+      return;
+    }
+
+    onChange('collection', value);
+    setNewCollection(null);
+  }
+
+  function commitNewCollection() {
+    const name = newCollection?.trim();
+
+    if (name) {
+      onChange('collection', name);
+    }
+
+    setNewCollection(null);
   }
 
   function handleApplyPatch(patch: PromptPatch) {
@@ -392,30 +462,75 @@ function PromptEditor({
             />
           </div>
 
-          <div>
-            <label htmlFor="prompt-rating" className="text-sm font-semibold text-ink">
-              Note
-            </label>
-            <select
-              id="prompt-rating"
-              value={draft.rating}
-              onChange={(event) => onChange('rating', Number(event.target.value))}
-              aria-invalid={Boolean(errors.rating)}
-              aria-describedby={errors.rating ? 'prompt-rating-error' : undefined}
-              className="form-select mt-2 sm:max-w-xs"
-            >
-              <option value={0}>Choisir une note</option>
-              {[1, 2, 3, 4, 5].map((rating) => (
-                <option key={rating} value={rating}>
-                  {rating} / 5
-                </option>
-              ))}
-            </select>
-            {errors.rating && (
-              <p id="prompt-rating-error" className="mt-1 text-sm text-danger">
-                {errors.rating}
-              </p>
-            )}
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label htmlFor="prompt-rating" className="text-sm font-semibold text-ink">
+                Note
+              </label>
+              <select
+                id="prompt-rating"
+                value={draft.rating}
+                onChange={(event) => onChange('rating', Number(event.target.value))}
+                aria-invalid={Boolean(errors.rating)}
+                aria-describedby={errors.rating ? 'prompt-rating-error' : undefined}
+                className="form-select mt-2 sm:max-w-xs"
+              >
+                <option value={0}>Choisir une note</option>
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <option key={rating} value={rating}>
+                    {rating} / 5
+                  </option>
+                ))}
+              </select>
+              {errors.rating && (
+                <p id="prompt-rating-error" className="mt-1 text-sm text-danger">
+                  {errors.rating}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="prompt-collection" className="text-sm font-semibold text-ink">
+                Collection
+              </label>
+              <select
+                id="prompt-collection"
+                value={newCollection !== null ? NEW_COLLECTION_OPTION : draft.collection}
+                onChange={(event) => handleCollectionChange(event.target.value)}
+                className="form-select mt-2 sm:max-w-xs"
+              >
+                <option value="">Sans collection</option>
+                {collectionOptions.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+                <option value={NEW_COLLECTION_OPTION}>Nouvelle collection…</option>
+              </select>
+              {newCollection !== null && (
+                <input
+                  id="prompt-new-collection"
+                  type="text"
+                  aria-label="Nom de la nouvelle collection"
+                  value={newCollection}
+                  onChange={(event) => setNewCollection(event.target.value)}
+                  onBlur={commitNewCollection}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      commitNewCollection();
+                    }
+
+                    if (event.key === 'Escape') {
+                      event.preventDefault();
+                      setNewCollection(null);
+                    }
+                  }}
+                  placeholder="Nom de la collection"
+                  className="form-input mt-2"
+                />
+              )}
+            </div>
           </div>
 
           {saveError && (
@@ -490,8 +605,9 @@ export default function App({ storage = defaultStorage }: AppProps) {
   const [query, setQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [minRating, setMinRating] = useState(0);
-  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [sort, setSort] = useState<SortOption>('priority');
+  const [collectionFilter, setCollectionFilter] = useState<CollectionFilter>({ kind: 'all' });
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [toast, setToast] = useState('');
   const [toastNonce, setToastNonce] = useState(0);
   const [draft, setDraft] = useState<PromptDraft>(emptyDraft);
@@ -516,16 +632,19 @@ export default function App({ storage = defaultStorage }: AppProps) {
   }, [view]);
 
   const tags = useMemo(() => rankTags(prompts).map((entry) => entry.tag), [prompts]);
+  const collections = useMemo(() => listCollections(prompts), [prompts]);
   const visiblePrompts = useMemo(
     () =>
       searchPrompts(prompts, {
         query,
         tags: selectedTags,
         minRating: minRating || undefined,
-        favoritesOnly,
+        favoritesOnly: collectionFilter.kind === 'favorites',
+        collection: collectionFilter.kind === 'collection' ? collectionFilter.name : undefined,
+        withoutCollection: collectionFilter.kind === 'none',
         sort,
       }),
-    [favoritesOnly, minRating, prompts, query, selectedTags, sort],
+    [collectionFilter, minRating, prompts, query, selectedTags, sort],
   );
   const selectedPrompt = prompts.find((prompt) => prompt.id === selectedPromptId);
   const variableNames = useMemo(
@@ -609,6 +728,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
               model: prompt.model,
               context: prompt.context,
               rating: prompt.rating,
+              collection: prompt.collection ?? '',
             }
           : emptyDraft);
       const nextTagsValue = initialDraft
@@ -870,6 +990,60 @@ export default function App({ storage = defaultStorage }: AppProps) {
     }
   }
 
+  async function renameCollectionAction(from: string, to: string) {
+    const target = to.trim();
+
+    if (!target || target === from.trim()) {
+      return;
+    }
+
+    const updated = renameCollection(prompts, from, target);
+    const updatedById = new Map(updated.map((prompt) => [prompt.id, prompt]));
+
+    try {
+      await Promise.all(
+        prompts
+          .filter((prompt) => prompt.collection === from)
+          .map((prompt) => {
+            const next = updatedById.get(prompt.id);
+            return next ? storage.save(next) : Promise.resolve();
+          }),
+      );
+      setPrompts(updated);
+      showToast(`Collection « ${from} » renommée en « ${target} »`);
+    } catch {
+      showToast('Impossible de renommer la collection.');
+    }
+  }
+
+  async function removeCollectionAction(name: string) {
+    if (
+      !window.confirm(
+        `Supprimer la collection « ${name} » ? Les prompts sont conservés mais détachés.`,
+      )
+    ) {
+      return;
+    }
+
+    const affected = prompts.filter((prompt) => prompt.collection === name);
+    const updated = removeCollection(prompts, name);
+    const updatedById = new Map(updated.map((prompt) => [prompt.id, prompt]));
+
+    try {
+      await Promise.all(
+        affected.map((prompt) => {
+          const next = updatedById.get(prompt.id);
+          return next ? storage.save(next) : Promise.resolve();
+        }),
+      );
+      setPrompts(updated);
+      setCollectionFilter({ kind: 'all' });
+      showToast(`Collection « ${name} » supprimée, les prompts sont conservés`);
+    } catch {
+      showToast('Impossible de supprimer la collection.');
+    }
+  }
+
   async function importLibrary(file: File) {
     let imported: Prompt[];
 
@@ -1062,6 +1236,13 @@ export default function App({ storage = defaultStorage }: AppProps) {
             <PromptLibrary
               prompts={visiblePrompts}
               hasPrompts={prompts.length > 0}
+              totalCount={prompts.length}
+              collections={collections}
+              collectionFilter={collectionFilter}
+              onSelectCollection={setCollectionFilter}
+              onManageCollections={() => setCollectionsOpen(true)}
+              favoritesCount={countFavorites(prompts)}
+              unassignedCount={countWithoutCollection(prompts)}
               onCreate={() => openEditor()}
               onExamples={openExamples}
               onSettings={openSettings}
@@ -1079,8 +1260,6 @@ export default function App({ storage = defaultStorage }: AppProps) {
               }
               minRating={minRating}
               onMinRatingChange={setMinRating}
-              favoritesOnly={favoritesOnly}
-              onFavoritesOnlyChange={setFavoritesOnly}
               sort={sort}
               onSortChange={setSort}
               onOpen={openPromptDetail}
@@ -1091,8 +1270,8 @@ export default function App({ storage = defaultStorage }: AppProps) {
                 setQuery('');
                 setSelectedTags([]);
                 setMinRating(0);
-                setFavoritesOnly(false);
                 setSort('priority');
+                setCollectionFilter({ kind: 'all' });
               }}
             />
           )}
@@ -1155,6 +1334,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
               saveError={saveError}
               saving={saving}
               isEditing={Boolean(editingPromptId)}
+              collections={collections}
               onChange={updateDraft}
               onCancel={() => requestView('library')}
               onSubmit={() => void savePrompt()}
@@ -1190,6 +1370,14 @@ export default function App({ storage = defaultStorage }: AppProps) {
           }
         }}
       />
+      {collectionsOpen && (
+        <CollectionsDialog
+          collections={collections}
+          onClose={() => setCollectionsOpen(false)}
+          onRename={(from, to) => void renameCollectionAction(from, to)}
+          onDelete={(name) => void removeCollectionAction(name)}
+        />
+      )}
       {commandOpen && (
         <CommandPalette
           prompts={prompts}

@@ -39,6 +39,7 @@ function isPrompt(value: unknown): value is Prompt {
     value.copyCount >= 0 &&
     typeof value.createdAt === 'string' &&
     typeof value.updatedAt === 'string' &&
+    (value.collection === undefined || typeof value.collection === 'string') &&
     (value.lastUsedAt === undefined || typeof value.lastUsedAt === 'string') &&
     (value.usageLog === undefined ||
       (Array.isArray(value.usageLog) &&

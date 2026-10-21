@@ -12,8 +12,6 @@ interface PromptSearchProps {
   onToggleTag: (tag: string) => void;
   minRating: number;
   onMinRatingChange: (rating: number) => void;
-  favoritesOnly: boolean;
-  onFavoritesOnlyChange: (favoritesOnly: boolean) => void;
   sort: SortOption;
   onSortChange: (sort: SortOption) => void;
 }
@@ -26,8 +24,6 @@ export function PromptSearch({
   onToggleTag,
   minRating,
   onMinRatingChange,
-  favoritesOnly,
-  onFavoritesOnlyChange,
   sort,
   onSortChange,
 }: PromptSearchProps) {
@@ -96,14 +92,6 @@ export function PromptSearch({
             Réduire
           </button>
         )}
-        <button
-          type="button"
-          aria-pressed={favoritesOnly}
-          onClick={() => onFavoritesOnlyChange(!favoritesOnly)}
-          className="filter-chip"
-        >
-          Favoris
-        </button>
         <span className="ml-auto text-xs font-semibold uppercase tracking-[0.12em] text-muted">
           Note minimale
         </span>

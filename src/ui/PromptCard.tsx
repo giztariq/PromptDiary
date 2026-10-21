@@ -71,6 +71,7 @@ export function PromptCard({
         </div>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-2">
+        {prompt.collection && <span className="badge">{prompt.collection}</span>}
         {prompt.tags.map((tag) => (
           <span key={tag} className="tag-chip">
             {tag}

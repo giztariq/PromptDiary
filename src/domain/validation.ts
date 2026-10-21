@@ -7,6 +7,7 @@ export interface PromptDraft {
   model: string;
   context: string;
   rating: number;
+  collection: string;
 }
 
 export type PromptDraftField = keyof PromptDraft;

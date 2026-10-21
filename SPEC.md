@@ -122,6 +122,14 @@ Consultant, formateur ou freelance qui utilise l'IA tous les jours et veut capit
 - Navigation aux flèches, `Entrée` ouvre l'élément surligné, `Alt+C` copie et `Alt+E` édite le prompt surligné.
 - Le focus est piégé dans la modale et la ligne active est annoncée par `aria-activedescendant`.
 
+### US14 — Collections
+
+- Un prompt appartient à zéro ou une collection ; la liste des collections est dérivée de la bibliothèque (valeurs uniques, ordre alphabétique) avec un compteur.
+- Barre de navigation (colonne sur desktop, chips horizontales sur mobile) : Tous, Favoris, Sans collection, puis une entrée par collection.
+- L'éditeur propose un sélecteur de collection avec création en ligne ; la carte et le détail affichent la collection.
+- Renommer une collection met à jour tous les prompts concernés ; supprimer une collection détache les prompts sans les supprimer.
+- L'export JSON inclut la collection et l'import la conserve.
+
 ## 5. Modèle de données
 
 ```ts

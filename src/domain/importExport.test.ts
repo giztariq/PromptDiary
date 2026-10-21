@@ -43,6 +43,17 @@ describe('prompt import and export', () => {
     expect(parsePromptExport(exportPrompts([usedPrompt]))).toEqual([usedPrompt]);
   });
 
+  it('round-trips the collection of each prompt', () => {
+    const withCollection = { ...prompt, collection: 'Client Dupont' };
+
+    expect(parsePromptExport(exportPrompts([withCollection]))).toEqual([withCollection]);
+    expect(JSON.parse(exportPrompts([withCollection])).prompts[0].collection).toBe('Client Dupont');
+  });
+
+  it('accepts an export without collection', () => {
+    expect(parsePromptExport(exportPrompts([prompt]))).toEqual([prompt]);
+  });
+
   it('merges imported prompts without duplicating ids', () => {
     const imported = [prompt, { ...prompt, id: 'prompt-2', title: 'Nouveau' }];
 

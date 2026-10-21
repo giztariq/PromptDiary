@@ -18,6 +18,7 @@ Journal local-first de prompts : sauvegardez ce qui fonctionne, notez-le, retrou
 - **Garde-fou brouillon** : confirmation avant de quitter un prompt modifié, y compris à la fermeture de l'onglet.
 - **Filtres** par tags, note minimale et favoris, avec tri au choix (priorité, nouveautés, plus utilisés, mieux notés, titre A → Z). Les tags sont classés par usage et la liste se replie au-delà de 12 tags.
 - **Historique d'usage** : 10 dernières utilisations conservées, 5 affichées dans le détail, compteur de copies, dates relatives (« il y a 3 h ») avec la date exacte en infobulle.
+- **Collections** : classez vos prompts par client, projet ou contexte, renommez ou détachez une collection sans jamais perdre un prompt.
 - **Statistiques locales** : prompts, copies, favoris, note moyenne, prompts les plus utilisés, tags les plus utilisés, répartition des notes, prompts jamais copiés.
 - **12 exemples** prêts à importer, avec leur tag source.
 - **Import / export JSON** versionné, avec fusion sans doublon et reprise propre si un import échoue en cours de route.

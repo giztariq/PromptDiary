@@ -13,8 +13,6 @@ function buildProps() {
     onToggleTag: vi.fn(),
     minRating: 0,
     onMinRatingChange: vi.fn(),
-    favoritesOnly: false,
-    onFavoritesOnlyChange: vi.fn(),
     sort: 'priority' as const,
     onSortChange: vi.fn(),
   };
@@ -32,7 +30,7 @@ describe('PromptSearch filters', () => {
     expect(cross).toBeVisible();
     expect(cross).toHaveAttribute('aria-hidden', 'true');
     expect(within(unselected).queryByText('×')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button')).toHaveLength(7);
+    expect(screen.getAllByRole('button')).toHaveLength(6);
 
     await user.tab();
     expect(screen.getByRole('searchbox')).toHaveFocus();
@@ -53,23 +51,9 @@ describe('PromptSearch filters', () => {
     expect(props.onToggleTag).toHaveBeenNthCalledWith(3, 'email');
     expect(props.onToggleTag).toHaveBeenCalledTimes(3);
     await user.tab();
-    expect(screen.getByRole('button', { name: 'Favoris' })).toHaveFocus();
-    await user.tab();
     expect(screen.getByRole('button', { name: 'Note minimale : Toutes' })).toHaveFocus();
     await user.tab();
     expect(screen.getByRole('button', { name: 'Note minimale : 3+' })).toHaveFocus();
-  });
-
-  it('toggles the favorites filter and reports the new value', async () => {
-    const user = userEvent.setup();
-    const props = buildProps();
-    render(<PromptSearch {...props} />);
-
-    const favorites = screen.getByRole('button', { name: 'Favoris' });
-    expect(favorites).toHaveAttribute('aria-pressed', 'false');
-
-    await user.click(favorites);
-    expect(props.onFavoritesOnlyChange).toHaveBeenCalledExactlyOnceWith(true);
   });
 
   it('folds the tag list and expands it on demand', async () => {

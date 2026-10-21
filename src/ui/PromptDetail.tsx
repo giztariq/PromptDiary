@@ -127,6 +127,16 @@ export function PromptDetail({
             </dd>
           </div>
           <div>
+            <dt className="text-muted">Collection</dt>
+            <dd className="mt-2">
+              {prompt.collection ? (
+                <span className="badge">{prompt.collection}</span>
+              ) : (
+                <span className="text-muted">Aucune</span>
+              )}
+            </dd>
+          </div>
+          <div>
             <dt className="text-muted">Note</dt>
             <dd className="mt-2 font-medium text-accent" aria-label={`Note ${prompt.rating} sur 5`}>
               ★ {prompt.rating}/5

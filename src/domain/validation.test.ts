@@ -7,6 +7,7 @@ const validDraft: PromptDraft = {
   model: 'Claude',
   context: 'Synthèse',
   rating: 5,
+  collection: '',
 };
 
 describe('validatePromptDraft', () => {

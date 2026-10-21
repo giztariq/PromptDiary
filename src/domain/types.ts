@@ -12,6 +12,7 @@ export interface Prompt {
   copyCount: number;
   createdAt: string;
   updatedAt: string;
+  collection?: string;
   lastUsedAt?: string;
   usageLog?: string[];
 }

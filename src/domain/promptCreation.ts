@@ -18,5 +18,6 @@ export function createPromptFromDraft(draft: PromptDraft, id: string, timestamp:
     copyCount: 0,
     createdAt: timestamp,
     updatedAt: timestamp,
+    ...(draft.collection.trim() ? { collection: draft.collection.trim() } : {}),
   };
 }

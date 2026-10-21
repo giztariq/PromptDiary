@@ -6,6 +6,8 @@ export interface SearchFilters {
   tags?: string[];
   minRating?: number;
   favoritesOnly?: boolean;
+  collection?: string;
+  withoutCollection?: boolean;
   sort?: SortOption;
 }
 
@@ -41,6 +43,8 @@ export function searchPrompts(prompts: Prompt[], filters: SearchFilters = {}): P
       matchesQuery(prompt, query) &&
       matchesTags(prompt, tags) &&
       (filters.favoritesOnly !== true || prompt.favorite) &&
+      (filters.collection === undefined || prompt.collection === filters.collection) &&
+      (filters.withoutCollection !== true || !prompt.collection?.trim()) &&
       (filters.minRating === undefined || prompt.rating >= filters.minRating),
   );
 

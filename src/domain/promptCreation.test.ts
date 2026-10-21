@@ -12,6 +12,7 @@ describe('createPromptFromDraft', () => {
         model: ' Claude ',
         context: '  Synthèse  ',
         rating: 5,
+        collection: '  Client Dupont  ',
       },
       'prompt-1',
       '2026-10-19T12:00:00.000Z',
@@ -29,13 +30,22 @@ describe('createPromptFromDraft', () => {
       copyCount: 0,
       createdAt: '2026-10-19T12:00:00.000Z',
       updatedAt: '2026-10-19T12:00:00.000Z',
+      collection: 'Client Dupont',
     });
   });
 
   it('rejects a rating outside the domain range', () => {
     expect(() =>
       createPromptFromDraft(
-        { title: 'Titre', body: 'Corps', tags: [], model: '', context: '', rating: 6 },
+        {
+          title: 'Titre',
+          body: 'Corps',
+          tags: [],
+          model: '',
+          context: '',
+          rating: 6,
+          collection: '',
+        },
         'prompt-1',
         '2026-10-19T12:00:00.000Z',
       ),
