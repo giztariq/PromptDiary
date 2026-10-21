@@ -327,6 +327,36 @@ describe('Prompt Diary prompt library', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Correction annulée');
   });
 
+  it('opens the palette from the header and copies a prompt from it', async () => {
+    const user = userEvent.setup();
+    const prompt: Prompt = {
+      id: 'analysis',
+      title: 'Analyse de document',
+      body: 'Analyse ce document.',
+      tags: ['analyse'],
+      model: '',
+      context: '',
+      rating: 4,
+      favorite: false,
+      copyCount: 0,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+    };
+
+    render(<App storage={createMemoryAdapter([prompt])} />);
+    await screen.findByRole('heading', { name: 'Analyse de document' });
+
+    await user.click(screen.getByRole('button', { name: /Ouvrir la palette de commandes/ }));
+    const input = await screen.findByRole('combobox', {
+      name: 'Rechercher une commande ou un prompt',
+    });
+    await user.type(input, 'analyse');
+    await user.keyboard('{Alt>}c{/Alt}');
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Prompt copié');
+    await screen.findByText('copié 1×');
+  });
+
   it('toggles a favorite and keeps favorites before other prompts', async () => {
     const user = userEvent.setup();
     const firstPrompt: Prompt = {

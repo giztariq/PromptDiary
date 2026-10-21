@@ -13,7 +13,7 @@ Journal local-first de prompts : sauvegardez ce qui fonctionne, notez-le, retrou
 - **Variables dynamiques** `{{client}}`, `{{ton}}` : saisie au moment de l'usage, valeurs mémorisées par prompt.
 - **Coach qualité** pendant la rédaction et badge « À préciser » sur les prompts trop vagues. Chaque manque corrigeable (rôle, contexte, format, contraintes) se répare en un clic, avec annulation possible.
 - **Recherche instantanée** insensible à la casse et aux accents, sur le titre, le corps, les tags, le modèle et le contexte.
-- **Palette de commandes** `Ctrl/Cmd + K` pour créer, ouvrir un prompt ou rejoindre une vue, avec navigation aux flèches.
+- **Palette de commandes** `Ctrl/Cmd + K` (ou bouton **Commandes**) : sections **Prompts** (copier, éditer) et **Actions** (créer, exemples, statistiques, réglages, export, import, tris), avec recherche floue.
 - **Raccourcis clavier** listés dans **Réglages** : `N`, `/`, `Ctrl/Cmd + K`, `↑ ↓`, `Entrée`, `Échap`.
 - **Garde-fou brouillon** : confirmation avant de quitter un prompt modifié, y compris à la fermeture de l'onglet.
 - **Filtres** par tags, note minimale et favoris, avec tri au choix (priorité, nouveautés, plus utilisés, mieux notés, titre A → Z). Les tags sont classés par usage et la liste se replie au-delà de 12 tags.

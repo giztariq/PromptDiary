@@ -1,5 +1,5 @@
 import type { Prompt } from './types';
-import { searchPrompts } from './search';
+import { fuzzyMatch, fuzzyMatchPositions, searchPrompts } from './search';
 
 const prompts: Prompt[] = [
   {
@@ -141,5 +141,37 @@ describe('searchPrompts', () => {
 
     expect(results).toHaveLength(500);
     expect(performance.now() - start).toBeLessThan(50);
+  });
+});
+
+describe('fuzzyMatch', () => {
+  it('matches an approximate subsequence', () => {
+    expect(fuzzyMatch('rlnc', 'Relance client')).toBe(true);
+    expect(fuzzyMatch('rlc', 'Relance client')).toBe(true);
+    expect(fuzzyMatch('anl', 'Analyse de document')).toBe(true);
+  });
+
+  it('ignores case and accents', () => {
+    expect(fuzzyMatch('SYNTH', 'Synthétiser un document')).toBe(true);
+    expect(fuzzyMatch('synth', 'synthétiser un document')).toBe(true);
+  });
+
+  it('rejects unrelated text', () => {
+    expect(fuzzyMatch('xyz', 'Relance client')).toBe(false);
+    expect(fuzzyMatch('zz', 'Relance client')).toBe(false);
+  });
+
+  it('matches everything with an empty query', () => {
+    expect(fuzzyMatch('', 'Relance client')).toBe(true);
+    expect(fuzzyMatch('   ', 'Relance client')).toBe(true);
+  });
+
+  it('returns the matched positions in the original text', () => {
+    expect(fuzzyMatchPositions('rlc', 'Relance client')).toEqual([0, 2, 5]);
+    expect(fuzzyMatchPositions('xyz', 'Relance client')).toEqual([]);
+  });
+
+  it('keeps positions aligned with accented characters', () => {
+    expect(fuzzyMatchPositions('e', 'Synthétiser')).toEqual([5]);
   });
 });

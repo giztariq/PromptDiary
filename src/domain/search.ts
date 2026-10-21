@@ -46,3 +46,40 @@ export function searchPrompts(prompts: Prompt[], filters: SearchFilters = {}): P
 
   return sortPrompts(matches, filters.sort ?? 'priority');
 }
+
+export function fuzzyMatchPositions(query: string, text: string): number[] {
+  const normalizedQuery = normalize(query.trim());
+  const normalizedText = normalize(text);
+
+  if (normalizedQuery.length === 0) {
+    return [];
+  }
+
+  const positions: number[] = [];
+  let queryIndex = 0;
+
+  for (let index = 0; index < normalizedText.length; index += 1) {
+    if (normalizedText[index] === normalizedQuery[queryIndex]) {
+      positions.push(index);
+      queryIndex += 1;
+
+      if (queryIndex === normalizedQuery.length) {
+        return positions;
+      }
+    }
+  }
+
+  return [];
+}
+
+export function fuzzyMatch(query: string, text: string): boolean {
+  if (query.trim().length === 0) {
+    return true;
+  }
+
+  return fuzzyMatchPositions(query, text).length > 0;
+}
+
+export function searchableText(prompt: Prompt): string {
+  return [prompt.title, prompt.tags.join(' ')].join(' ');
+}

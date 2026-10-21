@@ -114,6 +114,14 @@ Consultant, formateur ou freelance qui utilise l'IA tous les jours et veut capit
 - La répartition des notes est affichée de 1 à 5.
 - Une bibliothèque vide affiche un état explicite qui invite à importer les exemples ou à créer un prompt.
 
+### US13 — Palette de commandes
+
+- Ouverture par `Ctrl/Cmd + K` ou par un bouton discret dans l'en-tête ; fermeture par Échap, clic extérieur ou bouton de retour.
+- Le champ de recherche est flou (sous-séquence) et filtre les prompts comme les actions.
+- Deux sections : **Prompts** (titre + tags, avec actions rapides « Copier » et « Éditer ») et **Actions** (nouveau prompt, bibliothèque, exemples, statistiques, réglages, export, import, tris).
+- Navigation aux flèches, `Entrée` ouvre l'élément surligné, `Alt+C` copie et `Alt+E` édite le prompt surligné.
+- Le focus est piégé dans la modale et la ligne active est annoncée par `aria-activedescendant`.
+
 ## 5. Modèle de données
 
 ```ts

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { vi } from 'vitest';
@@ -26,10 +26,15 @@ function renderPalette(overrides: Partial<ComponentProps<typeof CommandPalette>>
     onClose: vi.fn(),
     onCreate: vi.fn(),
     onOpenPrompt: vi.fn(),
+    onCopyPrompt: vi.fn(),
+    onEditPrompt: vi.fn(),
     onShowLibrary: vi.fn(),
     onShowExamples: vi.fn(),
     onShowSettings: vi.fn(),
     onShowStatistics: vi.fn(),
+    onExportLibrary: vi.fn(),
+    onImportLibrary: vi.fn(),
+    onSortChange: vi.fn(),
     ...overrides,
   };
 
@@ -37,15 +42,16 @@ function renderPalette(overrides: Partial<ComponentProps<typeof CommandPalette>>
   return props;
 }
 
+function searchInput(): HTMLElement {
+  return screen.getByRole('combobox', { name: 'Rechercher une commande ou un prompt' });
+}
+
 describe('CommandPalette', () => {
   it('filters commands without case or accent sensitivity and runs the active one', async () => {
     const user = userEvent.setup();
     const props = renderPalette();
-    const input = screen.getByRole('combobox', {
-      name: 'Rechercher une commande ou un prompt',
-    });
 
-    await user.type(input, 'REGLAGES');
+    await user.type(searchInput(), 'REGLAGES');
 
     expect(screen.getByRole('option', { name: /Réglages/ })).toBeVisible();
     await user.keyboard('{Enter}');
@@ -58,33 +64,83 @@ describe('CommandPalette', () => {
     const user = userEvent.setup();
     const props = renderPalette();
 
-    await user.type(
-      screen.getByRole('combobox', { name: 'Rechercher une commande ou un prompt' }),
-      'synthese',
-    );
+    await user.type(searchInput(), 'synthese');
     await user.keyboard('{Enter}');
 
     expect(props.onOpenPrompt).toHaveBeenCalledWith(analysisPrompt);
     expect(props.onClose).toHaveBeenCalled();
   });
 
+  it('matches prompts with an approximate query', async () => {
+    const user = userEvent.setup();
+    const props = renderPalette();
+
+    await user.type(searchInput(), 'synr');
+    await user.keyboard('{Enter}');
+
+    expect(props.onOpenPrompt).toHaveBeenCalledWith(analysisPrompt);
+  });
+
   it('cycles options with the arrow keys', async () => {
     const user = userEvent.setup();
     const props = renderPalette();
 
-    await user.keyboard('{ArrowDown}{Enter}');
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
 
     expect(props.onShowLibrary).toHaveBeenCalled();
+  });
+
+  it('copies and edits a prompt from the quick actions', async () => {
+    const user = userEvent.setup();
+    const props = renderPalette();
+
+    const promptRow = screen.getByRole('option', { name: /Synthèse de réunion/ }).parentElement;
+    expect(promptRow).not.toBeNull();
+
+    const actions = promptRow ? within(promptRow).getAllByRole('button') : [];
+    expect(actions.map((button) => button.textContent)).toEqual(['Copier', 'Éditer']);
+
+    await user.click(actions[0]);
+    expect(props.onCopyPrompt).toHaveBeenCalledWith(analysisPrompt);
+
+    await user.click(actions[1]);
+    expect(props.onEditPrompt).toHaveBeenCalledWith(analysisPrompt);
+  });
+
+  it('copies the highlighted prompt with the Alt+C shortcut', async () => {
+    const user = userEvent.setup();
+    const props = renderPalette();
+
+    await user.keyboard('{Alt>}c{/Alt}');
+
+    expect(props.onCopyPrompt).toHaveBeenCalledWith(analysisPrompt);
+  });
+
+  it('exposes the library actions', async () => {
+    const user = userEvent.setup();
+    const props = renderPalette();
+
+    await user.type(searchInput(), 'exporter');
+    await user.keyboard('{Enter}');
+
+    expect(props.onExportLibrary).toHaveBeenCalled();
+  });
+
+  it('changes the sort order from the palette', async () => {
+    const user = userEvent.setup();
+    const props = renderPalette();
+
+    await user.type(searchInput(), 'plus utilisés');
+    await user.keyboard('{Enter}');
+
+    expect(props.onSortChange).toHaveBeenCalledWith('usage');
   });
 
   it('closes with Escape and shows an empty state for unknown queries', async () => {
     const user = userEvent.setup();
     const props = renderPalette();
-    const input = screen.getByRole('combobox', {
-      name: 'Rechercher une commande ou un prompt',
-    });
 
-    await user.type(input, 'zzzz');
+    await user.type(searchInput(), 'zzzz');
     expect(screen.getByRole('status')).toHaveTextContent('Aucune commande');
     await user.keyboard('{Escape}');
 
@@ -95,10 +151,7 @@ describe('CommandPalette', () => {
     const user = userEvent.setup();
     const props = renderPalette();
 
-    await user.type(
-      screen.getByRole('combobox', { name: 'Rechercher une commande ou un prompt' }),
-      'statistiques',
-    );
+    await user.type(searchInput(), 'statistiques');
     await user.keyboard('{Enter}');
 
     expect(props.onShowStatistics).toHaveBeenCalledExactlyOnceWith();

@@ -503,6 +503,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [editorBaseline, setEditorBaseline] = useState(() => draftSnapshot(emptyDraft, ''));
   const hasChangedView = useRef(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const isEditorDirty = view === 'editor' && editorBaseline !== draftSnapshot(draft, tagsValue);
 
   useEffect(() => {
@@ -995,6 +996,18 @@ export default function App({ storage = defaultStorage }: AppProps) {
             <span>Prompt Diary</span>
           </button>
           <div className="app-header__actions flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCommandOpen(true)}
+              aria-keyshortcuts="Control+K Meta+K"
+              aria-label="Ouvrir la palette de commandes (⌘K)"
+              className="button-secondary inline-flex items-center gap-2"
+            >
+              <span className="hidden sm:inline">Commandes</span>
+              <kbd className="shortcut-key" aria-hidden="true">
+                ⌘K
+              </kbd>
+            </button>
             <button type="button" onClick={openExamples} className="button-secondary">
               Exemples
             </button>
@@ -1162,16 +1175,39 @@ export default function App({ storage = defaultStorage }: AppProps) {
         </footer>
       )}
       <Toast key={toastNonce} message={toast} />
+      <input
+        ref={importInputRef}
+        type="file"
+        accept="application/json,.json"
+        className="sr-only"
+        aria-label="Importer une bibliothèque JSON depuis la palette de commandes"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+
+          if (file) {
+            void importLibrary(file);
+            event.currentTarget.value = '';
+          }
+        }}
+      />
       {commandOpen && (
         <CommandPalette
           prompts={prompts}
           onClose={() => setCommandOpen(false)}
           onCreate={() => openEditor()}
           onOpenPrompt={openPromptDetail}
+          onCopyPrompt={(prompt) => void copyPrompt(prompt)}
+          onEditPrompt={(prompt) => openEditor(prompt)}
           onShowLibrary={() => requestView('library')}
           onShowExamples={openExamples}
           onShowSettings={openSettings}
           onShowStatistics={openStatistics}
+          onExportLibrary={() => void exportLibrary()}
+          onImportLibrary={() => importInputRef.current?.click()}
+          onSortChange={(nextSort) => {
+            setSort(nextSort);
+            requestView('library');
+          }}
         />
       )}
       {variablePrompt && (
