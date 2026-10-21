@@ -13,6 +13,7 @@ import {
   type PromptDraftErrors,
 } from '../domain/validation';
 import { detectVaguePrompt } from '../domain/vagueDetection';
+import type { PromptPatch } from '../domain/coach';
 import { fillVariables, parseVariables } from '../domain/variables';
 import type { Prompt } from '../domain/types';
 import { EXAMPLES, type Example } from '../data/examples';
@@ -235,6 +236,7 @@ interface PromptEditorProps {
   onCancel: () => void;
   onSubmit: () => void;
   onCopyPreview: () => void;
+  onNotify: (message: string) => void;
 }
 
 function PromptEditor({
@@ -248,9 +250,35 @@ function PromptEditor({
   onCancel,
   onSubmit,
   onCopyPreview,
+  onNotify,
 }: PromptEditorProps) {
   const detection = detectVaguePrompt(draft);
   const variables = parseVariables(draft.body);
+  const [undoBody, setUndoBody] = useState<string | null>(null);
+
+  function handleFieldChange(field: keyof PromptDraft, value: string | number) {
+    if (field === 'body') {
+      setUndoBody(null);
+    }
+
+    onChange(field, value);
+  }
+
+  function handleApplyPatch(patch: PromptPatch) {
+    setUndoBody(draft.body);
+    onChange('body', patch.apply(draft.body));
+    onNotify('Correction appliquée');
+  }
+
+  function handleUndo() {
+    if (undoBody === null) {
+      return;
+    }
+
+    onChange('body', undoBody);
+    setUndoBody(null);
+    onNotify('Correction annulée');
+  }
 
   return (
     <section aria-labelledby="editor-heading" aria-busy={saving} className="mt-8">
@@ -303,7 +331,7 @@ function PromptEditor({
             <textarea
               id="prompt-body"
               value={draft.body}
-              onChange={(event) => onChange('body', event.target.value)}
+              onChange={(event) => handleFieldChange('body', event.target.value)}
               aria-invalid={Boolean(errors.body)}
               aria-describedby={errors.body ? 'prompt-body-error' : undefined}
               rows={10}
@@ -440,7 +468,12 @@ function PromptEditor({
               )}
             </div>
           </section>
-          <QualityCoach text={draft.body} />
+          <QualityCoach
+            text={draft.body}
+            onApplyPatch={handleApplyPatch}
+            onUndo={handleUndo}
+            canUndo={undoBody !== null}
+          />
         </div>
       </div>
     </section>
@@ -1113,6 +1146,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
               onCancel={() => requestView('library')}
               onSubmit={() => void savePrompt()}
               onCopyPreview={() => void copyDraftPreview()}
+              onNotify={showToast}
             />
           )}
         </div>

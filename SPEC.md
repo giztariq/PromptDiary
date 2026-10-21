@@ -71,6 +71,8 @@ Consultant, formateur ou freelance qui utilise l'IA tous les jours et veut capit
 - Badge « À préciser » avec suggestion textuelle.
 - Le coach qualité pendant la rédaction utilise le même modèle de détection.
 - Cas vagues et non vagues couverts par des tests.
+- Chaque manque corrigeable (rôle, contexte, format de sortie, contraintes) propose un patch appliqué en un clic.
+- La correction appliquée est annulable en un clic ; le score est recalculé immédiatement.
 
 ### US8 — Historique d'usage
 

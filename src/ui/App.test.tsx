@@ -306,6 +306,27 @@ describe('Prompt Diary prompt library', () => {
     expect(screen.getByText('Ctrl + K')).toBeVisible();
   });
 
+  it('applies a coach correction in one click and undoes it', async () => {
+    const user = userEvent.setup();
+    render(<App storage={createMemoryAdapter()} />);
+
+    await screen.findByText('Aucun prompt enregistré');
+    await user.click(screen.getByRole('button', { name: 'Nouveau prompt' }));
+    const body = screen.getByLabelText('Corps du prompt');
+    await user.type(body, 'Rédige un texte.');
+
+    const correctButtons = await screen.findAllByRole('button', { name: 'Corriger' });
+    expect(correctButtons.length).toBeGreaterThan(0);
+    await user.click(correctButtons[0]);
+
+    expect(body).toHaveValue('Agis comme [expert du domaine].\n\nRédige un texte.');
+    expect(await screen.findByRole('status')).toHaveTextContent('Correction appliquée');
+
+    await user.click(screen.getByRole('button', { name: 'Annuler la correction' }));
+    expect(body).toHaveValue('Rédige un texte.');
+    expect(await screen.findByRole('status')).toHaveTextContent('Correction annulée');
+  });
+
   it('toggles a favorite and keeps favorites before other prompts', async () => {
     const user = userEvent.setup();
     const firstPrompt: Prompt = {

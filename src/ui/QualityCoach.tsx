@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { analyzePrompt, type AnalyzePromptResult } from '../domain/analyzePrompt';
+import { analyzePrompt, type AnalyzePromptResult, type Check } from '../domain/analyzePrompt';
+import type { PromptPatch } from '../domain/coach';
 
 interface QualityCoachProps {
   text: string;
+  onApplyPatch?: (patch: PromptPatch) => void;
+  onUndo?: () => void;
+  canUndo?: boolean;
 }
 
 function scoreTone(score: number): 'low' | 'medium' | 'high' {
@@ -12,13 +16,63 @@ function scoreTone(score: number): 'low' | 'medium' | 'high' {
   return 'high';
 }
 
-export function QualityCoach({ text }: QualityCoachProps) {
+function CoachCheckRow({
+  check,
+  onApplyPatch,
+}: {
+  check: Check;
+  onApplyPatch?: (patch: PromptPatch) => void;
+}) {
+  const { patch } = check;
+
+  return (
+    <div className="coach-check check-enter">
+      <span
+        className={
+          check.passed ? 'coach-check__icon coach-check__icon--passed' : 'coach-check__icon'
+        }
+        aria-hidden="true"
+      >
+        {check.passed ? '✓' : '○'}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-ink">{check.label}</p>
+        {!check.passed && <p className="mt-1 text-xs leading-5 text-muted">{check.suggestion}</p>}
+        {!check.passed && patch && onApplyPatch && (
+          <button
+            type="button"
+            onClick={() => onApplyPatch(patch)}
+            className="button-secondary mt-2 min-h-8 px-2 py-1 text-xs"
+          >
+            Corriger
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function QualityCoach({ text, onApplyPatch, onUndo, canUndo }: QualityCoachProps) {
   const [analysis, setAnalysis] = useState<AnalyzePromptResult>(() => analyzePrompt(text));
+  const [bumping, setBumping] = useState(false);
+  const previousScore = useRef(analysis.score);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setAnalysis(analyzePrompt(text)), 300);
     return () => window.clearTimeout(timeout);
   }, [text]);
+
+  useEffect(() => {
+    if (analysis.score > previousScore.current) {
+      setBumping(true);
+      const timeout = window.setTimeout(() => setBumping(false), 600);
+      previousScore.current = analysis.score;
+      return () => window.clearTimeout(timeout);
+    }
+
+    previousScore.current = analysis.score;
+    return undefined;
+  }, [analysis.score]);
 
   const tone = scoreTone(analysis.score);
 
@@ -31,7 +85,9 @@ export function QualityCoach({ text }: QualityCoachProps) {
             Aperçu &amp; coach
           </h3>
         </div>
-        <span className={`coach-score coach-score--${tone}`}>Qualité : {analysis.score}/6</span>
+        <span className={`coach-score coach-score--${tone} ${bumping ? 'coach-score--bump' : ''}`}>
+          Qualité : {analysis.score}/6
+        </span>
       </div>
       <div className="coach-progress mt-4" aria-hidden="true">
         <span
@@ -41,24 +97,14 @@ export function QualityCoach({ text }: QualityCoachProps) {
       </div>
       <div className="mt-5 grid gap-3">
         {analysis.checks.map((check) => (
-          <div key={check.key} className="coach-check check-enter">
-            <span
-              className={
-                check.passed ? 'coach-check__icon coach-check__icon--passed' : 'coach-check__icon'
-              }
-              aria-hidden="true"
-            >
-              {check.passed ? '✓' : '○'}
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-ink">{check.label}</p>
-              {!check.passed && (
-                <p className="mt-1 text-xs leading-5 text-muted">{check.suggestion}</p>
-              )}
-            </div>
-          </div>
+          <CoachCheckRow key={check.key} check={check} onApplyPatch={onApplyPatch} />
         ))}
       </div>
+      {canUndo && onUndo && (
+        <button type="button" onClick={onUndo} className="button-secondary mt-4 w-full text-xs">
+          Annuler la correction
+        </button>
+      )}
     </aside>
   );
 }

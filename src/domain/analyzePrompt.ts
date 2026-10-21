@@ -1,8 +1,17 @@
+import {
+  CONTEXT_PATCH,
+  CONSTRAINTS_PATCH,
+  FORMAT_PATCH,
+  ROLE_PATCH,
+  type PromptPatch,
+} from './coach';
+
 export interface Check {
   key: string;
   label: string;
   passed: boolean;
   suggestion: string;
+  patch?: PromptPatch;
 }
 
 export interface AnalyzePromptResult {
@@ -17,7 +26,7 @@ const CONTEXT_PATTERN =
 const FORMAT_PATTERN =
   /\b(?:format|tableau|liste|json|markdown|puces?|etapes?|paragraphes?|colonnes?|sous forme|reponds|presente|longueur|mots|lignes|sections?|nombre de)\b/u;
 const CONSTRAINT_PATTERN =
-  /\b(?:ton|style|ne\s+pas|n['’]?utilise|sans|exemple|contrainte|limite|maximum|minimum|evite|concis|professionnel|formel|informel)\b/u;
+  /\b(?:ton|style|ne\s+pas|n['�?T]?utilise|sans|exemple|contrainte|limite|maximum|minimum|evite|concis|professionnel|formel|informel)\b/u;
 
 const ACTION_VERBS = new Set([
   'agis',
@@ -49,9 +58,9 @@ const ACTION_VERBS = new Set([
   'rediger',
   'resume',
   'resumer',
-  'synthétise',
+  'synthǸtise',
   'synthetise',
-  'synthétiser',
+  'synthǸtiser',
   'synthetiser',
   'traduis',
   'traduire',
@@ -94,45 +103,63 @@ function startsWithAction(text: string): boolean {
   return false;
 }
 
+function buildCheck(
+  key: string,
+  label: string,
+  passed: boolean,
+  suggestion: string,
+  patch?: PromptPatch,
+): Check {
+  if (passed || !patch) {
+    return { key, label, passed, suggestion };
+  }
+
+  return { key, label, passed, suggestion, patch };
+}
+
 export function analyzePrompt(texte: string): AnalyzePromptResult {
   const normalizedText = normalize(texte);
   const checks: Check[] = [
-    {
-      key: 'role',
-      label: 'Rôle ou persona',
-      passed: ROLE_PATTERN.test(normalizedText),
-      suggestion: 'Ajoutez « Agis comme… » ou « Tu es… ».',
-    },
-    {
-      key: 'context',
-      label: 'Contexte fourni',
-      passed: CONTEXT_PATTERN.test(normalizedText),
-      suggestion: 'Précisez la situation, le public ou l’objectif.',
-    },
-    {
-      key: 'format',
-      label: 'Format de sortie',
-      passed: FORMAT_PATTERN.test(normalizedText),
-      suggestion: 'Indiquez le format attendu : liste, tableau ou JSON.',
-    },
-    {
-      key: 'constraints',
-      label: 'Contraintes ou exemples',
-      passed: CONSTRAINT_PATTERN.test(normalizedText),
-      suggestion: 'Ajoutez un ton, une contrainte ou un exemple.',
-    },
-    {
-      key: 'length',
-      label: 'Longueur suffisante',
-      passed: wordCount(texte) > 15,
-      suggestion: 'Développez la consigne au-delà de 15 mots.',
-    },
-    {
-      key: 'objective',
-      label: 'Objectif clair',
-      passed: startsWithAction(texte),
-      suggestion: 'Commencez par un verbe d’action : analysez, créez ou résumez.',
-    },
+    buildCheck(
+      'role',
+      'Rôle ou persona',
+      ROLE_PATTERN.test(normalizedText),
+      'Ajoutez « Agis comme… » ou « Tu es… ».',
+      ROLE_PATCH,
+    ),
+    buildCheck(
+      'context',
+      'Contexte fourni',
+      CONTEXT_PATTERN.test(normalizedText),
+      'Précisez la situation, le public ou l’objectif.',
+      CONTEXT_PATCH,
+    ),
+    buildCheck(
+      'format',
+      'Format de sortie',
+      FORMAT_PATTERN.test(normalizedText),
+      'Indiquez le format attendu : liste, tableau ou JSON.',
+      FORMAT_PATCH,
+    ),
+    buildCheck(
+      'constraints',
+      'Contraintes ou exemples',
+      CONSTRAINT_PATTERN.test(normalizedText),
+      'Ajoutez un ton, une contrainte ou un exemple.',
+      CONSTRAINTS_PATCH,
+    ),
+    buildCheck(
+      'length',
+      'Longueur suffisante',
+      wordCount(texte) > 15,
+      'Développez la consigne au-delà de 15 mots.',
+    ),
+    buildCheck(
+      'objective',
+      'Objectif clair',
+      startsWithAction(texte),
+      'Commencez par un verbe d’action : analysez, créez ou résumez.',
+    ),
   ];
 
   return {

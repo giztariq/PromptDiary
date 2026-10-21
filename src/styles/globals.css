@@ -508,6 +508,22 @@ kbd {
     color: var(--success);
   }
 
+  .coach-score--bump {
+    animation: coach-score-bump 500ms ease;
+  }
+
+  @keyframes coach-score-bump {
+    0% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(1.08);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
   .coach-progress {
     height: 8px;
     overflow: hidden;

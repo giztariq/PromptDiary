@@ -11,7 +11,7 @@ Journal local-first de prompts : sauvegardez ce qui fonctionne, notez-le, retrou
 
 - **Bibliothèque de prompts** avec titre, corps, tags, modèle, contexte et note de 1 à 5.
 - **Variables dynamiques** `{{client}}`, `{{ton}}` : saisie au moment de l'usage, valeurs mémorisées par prompt.
-- **Coach qualité** pendant la rédaction et badge « À préciser » sur les prompts trop vagues.
+- **Coach qualité** pendant la rédaction et badge « À préciser » sur les prompts trop vagues. Chaque manque corrigeable (rôle, contexte, format, contraintes) se répare en un clic, avec annulation possible.
 - **Recherche instantanée** insensible à la casse et aux accents, sur le titre, le corps, les tags, le modèle et le contexte.
 - **Palette de commandes** `Ctrl/Cmd + K` pour créer, ouvrir un prompt ou rejoindre une vue, avec navigation aux flèches.
 - **Raccourcis clavier** listés dans **Réglages** : `N`, `/`, `Ctrl/Cmd + K`, `↑ ↓`, `Entrée`, `Échap`.
