@@ -72,6 +72,49 @@ function findRanges(text: string, query: string): MatchRange[] {
   return ranges;
 }
 
+function findFuzzyRanges(text: string, query: string): MatchRange[] {
+  const normalizedQuery = normalize(query);
+
+  if (normalizedQuery.length < 3) {
+    return [];
+  }
+
+  const { normalized, map } = buildIndexMap(text);
+  const positions: number[] = [];
+  let queryIndex = 0;
+
+  for (
+    let index = 0;
+    index < normalized.length && queryIndex < normalizedQuery.length;
+    index += 1
+  ) {
+    if (normalized[index] === normalizedQuery[queryIndex]) {
+      positions.push(index);
+      queryIndex += 1;
+    }
+  }
+
+  if (queryIndex < normalizedQuery.length) {
+    return [];
+  }
+
+  const ranges: MatchRange[] = [];
+
+  for (const position of positions) {
+    const start = map[position];
+    const end = extendToCombiningMarks(text, start + 1);
+    const previousRange = ranges.at(-1);
+
+    if (previousRange && start <= previousRange.end) {
+      previousRange.end = Math.max(previousRange.end, end);
+    } else {
+      ranges.push({ start, end });
+    }
+  }
+
+  return ranges;
+}
+
 export function HighlightedText({ text, query }: HighlightedTextProps) {
   const trimmedQuery = query.trim();
 
@@ -79,7 +122,9 @@ export function HighlightedText({ text, query }: HighlightedTextProps) {
     return <>{text}</>;
   }
 
-  const ranges = findRanges(text, trimmedQuery);
+  const exactRanges = findRanges(text, trimmedQuery);
+  const ranges = exactRanges.length > 0 ? exactRanges : findFuzzyRanges(text, trimmedQuery);
+
   if (ranges.length === 0) {
     return <>{text}</>;
   }

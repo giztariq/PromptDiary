@@ -28,10 +28,14 @@ Consultant, formateur ou freelance qui utilise l'IA tous les jours et veut capit
 ### US2 — Rechercher et filtrer
 
 - Recherche insensible à la casse et aux accents sur le titre, le corps, les tags, le modèle et le contexte.
+- La recherche accepte aussi une saisie approchante (sous-séquence compacte) : « rlc » retrouve « Relance client ».
+- Les correspondances approximatives sont surlignées dans le titre et l'extrait.
+- Un compteur « N résultats » est affiché au-dessus de la liste.
 - Filtres par tags et note minimale combinables.
 - Les filtres de tags sont classés par usage, puis repliés au-delà de 12 tags avec un bouton d'expansion.
 - Filtre « favoris uniquement » combinable avec les autres filtres.
 - Tri explicite : priorité, nouveautés, les plus utilisés, mieux notés, titre A → Z.
+- Filtres d'usage : « Jamais utilisés » et « Non utilisés depuis 30 jours » (un prompt sans `lastUsedAt` compte comme jamais utilisé).
 - Les favoris remontent avant les autres prompts, puis le tri par priorité d'usage s'applique.
 - Résultats en moins de 50 ms sur 500 prompts (test de performance).
 - Les occurrences sont surlignées sans casser les accents ni traiter les caractères regex littéralement.

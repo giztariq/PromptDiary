@@ -175,3 +175,68 @@ describe('fuzzyMatch', () => {
     expect(fuzzyMatchPositions('e', 'Synthétiser')).toEqual([5]);
   });
 });
+
+describe('searchPrompts fuzzy mode', () => {
+  it('finds a prompt with an approximate query', () => {
+    const approximate = [
+      {
+        ...prompts[0],
+        id: 'relance',
+        title: 'Relance client',
+        body: 'Prépare une relance commerciale.',
+      },
+    ];
+
+    expect(
+      searchPrompts(approximate, { query: 'rlc', fuzzy: true }).map((prompt) => prompt.id),
+    ).toEqual(['relance']);
+  });
+
+  it('does not match unrelated prompts', () => {
+    expect(searchPrompts(prompts, { query: 'xyz', fuzzy: true })).toEqual([]);
+  });
+
+  it('ignores short queries in fuzzy mode', () => {
+    expect(fuzzyMatch('aa', 'Analyse de document')).toBe(true);
+    expect(searchPrompts(prompts, { query: 'aa', fuzzy: true })).toEqual([]);
+  });
+});
+
+describe('searchPrompts usage filters', () => {
+  const now = new Date('2026-10-21T12:00:00.000Z');
+
+  it('keeps the prompts that were never used', () => {
+    const library = [
+      { ...prompts[0], id: 'used', copyCount: 3, lastUsedAt: '2026-10-20T12:00:00.000Z' },
+      { ...prompts[1], id: 'never', copyCount: 0 },
+    ];
+
+    expect(searchPrompts(library, { neverUsed: true }, now).map((prompt) => prompt.id)).toEqual([
+      'never',
+    ]);
+  });
+
+  it('keeps the prompts unused for more than the given number of days', () => {
+    const library = [
+      { ...prompts[0], id: 'recent', lastUsedAt: '2026-10-19T12:00:00.000Z' },
+      { ...prompts[1], id: 'old', lastUsedAt: '2026-09-01T12:00:00.000Z' },
+      { ...prompts[2], id: 'never' },
+    ];
+
+    expect(searchPrompts(library, { unusedForDays: 30 }, now).map((prompt) => prompt.id)).toEqual([
+      'old',
+      'never',
+    ]);
+  });
+
+  it('combines the usage filters with the other filters', () => {
+    const library = [
+      { ...prompts[0], id: 'never', copyCount: 0, rating: 5 as const },
+      { ...prompts[1], id: 'used', copyCount: 2, rating: 5 as const },
+    ];
+
+    expect(
+      searchPrompts(library, { neverUsed: true, minRating: 5 }, now).map((prompt) => prompt.id),
+    ).toEqual(['never']);
+  });
+});

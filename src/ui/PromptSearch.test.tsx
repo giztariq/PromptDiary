@@ -13,6 +13,10 @@ function buildProps() {
     onToggleTag: vi.fn(),
     minRating: 0,
     onMinRatingChange: vi.fn(),
+    neverUsed: false,
+    onNeverUsedChange: vi.fn(),
+    unusedForDays: false,
+    onUnusedForDaysChange: vi.fn(),
     sort: 'priority' as const,
     onSortChange: vi.fn(),
   };
@@ -30,7 +34,7 @@ describe('PromptSearch filters', () => {
     expect(cross).toBeVisible();
     expect(cross).toHaveAttribute('aria-hidden', 'true');
     expect(within(unselected).queryByText('×')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button')).toHaveLength(6);
+    expect(screen.getAllByRole('button')).toHaveLength(8);
 
     await user.tab();
     expect(screen.getByRole('searchbox')).toHaveFocus();
@@ -54,6 +58,22 @@ describe('PromptSearch filters', () => {
     expect(screen.getByRole('button', { name: 'Note minimale : Toutes' })).toHaveFocus();
     await user.tab();
     expect(screen.getByRole('button', { name: 'Note minimale : 3+' })).toHaveFocus();
+  });
+
+  it('toggles the usage filters', async () => {
+    const user = userEvent.setup();
+    const props = buildProps();
+    render(<PromptSearch {...props} />);
+
+    const neverUsed = screen.getByRole('button', { name: 'Jamais utilisés' });
+    const unused = screen.getByRole('button', { name: 'Non utilisés depuis 30 jours' });
+
+    expect(neverUsed).toHaveAttribute('aria-pressed', 'false');
+    await user.click(neverUsed);
+    expect(props.onNeverUsedChange).toHaveBeenCalledExactlyOnceWith(true);
+
+    await user.click(unused);
+    expect(props.onUnusedForDaysChange).toHaveBeenCalledExactlyOnceWith(true);
   });
 
   it('folds the tag list and expands it on demand', async () => {

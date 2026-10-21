@@ -12,11 +12,11 @@ Journal local-first de prompts : sauvegardez ce qui fonctionne, notez-le, retrou
 - **Bibliothèque de prompts** avec titre, corps, tags, modèle, contexte et note de 1 à 5.
 - **Variables dynamiques** `{{client}}`, `{{ton}}` : saisie au moment de l'usage, valeurs mémorisées par prompt.
 - **Coach qualité** pendant la rédaction et badge « À préciser » sur les prompts trop vagues. Chaque manque corrigeable (rôle, contexte, format, contraintes) se répare en un clic, avec annulation possible.
-- **Recherche instantanée** insensible à la casse et aux accents, sur le titre, le corps, les tags, le modèle et le contexte.
+- **Recherche instantanée** insensible à la casse et aux accents, avec saisie approchante (« rlc » → « Relance client »), surlignage des correspondances et compteur de résultats.
 - **Palette de commandes** `Ctrl/Cmd + K` (ou bouton **Commandes**) : sections **Prompts** (copier, éditer) et **Actions** (créer, exemples, statistiques, réglages, export, import, tris), avec recherche floue.
 - **Raccourcis clavier** listés dans **Réglages** : `N`, `/`, `Ctrl/Cmd + K`, `↑ ↓`, `Entrée`, `Échap`.
 - **Garde-fou brouillon** : confirmation avant de quitter un prompt modifié, y compris à la fermeture de l'onglet.
-- **Filtres** par tags, note minimale et favoris, avec tri au choix (priorité, nouveautés, plus utilisés, mieux notés, titre A → Z). Les tags sont classés par usage et la liste se replie au-delà de 12 tags.
+- **Filtres** par tags, note minimale, favoris, « jamais utilisés » et « non utilisés depuis 30 jours », avec tri au choix (priorité, nouveautés, plus utilisés, mieux notés, titre A → Z). Les tags sont classés par usage et la liste se replie au-delà de 12 tags.
 - **Historique d'usage** : 10 dernières utilisations conservées, 5 affichées dans le détail, compteur de copies, dates relatives (« il y a 3 h ») avec la date exacte en infobulle.
 - **Collections** : classez vos prompts par client, projet ou contexte, renommez ou détachez une collection sans jamais perdre un prompt.
 - **Statistiques locales** : prompts, copies, favoris, note moyenne, prompts les plus utilisés, tags les plus utilisés, répartition des notes, prompts jamais copiés.

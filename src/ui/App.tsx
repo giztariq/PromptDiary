@@ -123,6 +123,10 @@ interface PromptLibraryProps {
   onToggleTag: (tag: string) => void;
   minRating: number;
   onMinRatingChange: (rating: number) => void;
+  neverUsed: boolean;
+  onNeverUsedChange: (neverUsed: boolean) => void;
+  unusedForDays: boolean;
+  onUnusedForDaysChange: (unusedForDays: boolean) => void;
   sort: SortOption;
   onSortChange: (sort: SortOption) => void;
   onOpen: (prompt: Prompt) => void;
@@ -153,6 +157,10 @@ function PromptLibrary({
   onToggleTag,
   minRating,
   onMinRatingChange,
+  neverUsed,
+  onNeverUsedChange,
+  unusedForDays,
+  onUnusedForDaysChange,
   sort,
   onSortChange,
   onOpen,
@@ -192,6 +200,10 @@ function PromptLibrary({
         onToggleTag={onToggleTag}
         minRating={minRating}
         onMinRatingChange={onMinRatingChange}
+        neverUsed={neverUsed}
+        onNeverUsedChange={onNeverUsedChange}
+        unusedForDays={unusedForDays}
+        onUnusedForDaysChange={onUnusedForDaysChange}
         sort={sort}
         onSortChange={onSortChange}
       />
@@ -241,18 +253,23 @@ function PromptLibrary({
             )}
           </div>
         ) : (
-          <div className="grid gap-4" aria-label="Liste des prompts">
-            {prompts.map((prompt) => (
-              <PromptCard
-                key={prompt.id}
-                prompt={prompt}
-                onOpen={() => onOpen(prompt)}
-                onCopy={() => onCopy(prompt)}
-                onUse={() => onUse(prompt)}
-                onToggleFavorite={() => onToggleFavorite(prompt)}
-                query={query}
-              />
-            ))}
+          <div>
+            <p className="mb-4 text-sm text-muted">
+              {prompts.length} résultat{prompts.length === 1 ? '' : 's'}
+            </p>
+            <div className="grid gap-4" aria-label="Liste des prompts">
+              {prompts.map((prompt) => (
+                <PromptCard
+                  key={prompt.id}
+                  prompt={prompt}
+                  onOpen={() => onOpen(prompt)}
+                  onCopy={() => onCopy(prompt)}
+                  onUse={() => onUse(prompt)}
+                  onToggleFavorite={() => onToggleFavorite(prompt)}
+                  query={query}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -605,6 +622,8 @@ export default function App({ storage = defaultStorage }: AppProps) {
   const [query, setQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [minRating, setMinRating] = useState(0);
+  const [neverUsed, setNeverUsed] = useState(false);
+  const [unusedForDays, setUnusedForDays] = useState(false);
   const [sort, setSort] = useState<SortOption>('priority');
   const [collectionFilter, setCollectionFilter] = useState<CollectionFilter>({ kind: 'all' });
   const [collectionsOpen, setCollectionsOpen] = useState(false);
@@ -642,9 +661,12 @@ export default function App({ storage = defaultStorage }: AppProps) {
         favoritesOnly: collectionFilter.kind === 'favorites',
         collection: collectionFilter.kind === 'collection' ? collectionFilter.name : undefined,
         withoutCollection: collectionFilter.kind === 'none',
+        neverUsed,
+        unusedForDays: unusedForDays ? 30 : undefined,
+        fuzzy: true,
         sort,
       }),
-    [collectionFilter, minRating, prompts, query, selectedTags, sort],
+    [collectionFilter, minRating, neverUsed, prompts, query, selectedTags, sort, unusedForDays],
   );
   const selectedPrompt = prompts.find((prompt) => prompt.id === selectedPromptId);
   const variableNames = useMemo(
@@ -1260,6 +1282,10 @@ export default function App({ storage = defaultStorage }: AppProps) {
               }
               minRating={minRating}
               onMinRatingChange={setMinRating}
+              neverUsed={neverUsed}
+              onNeverUsedChange={setNeverUsed}
+              unusedForDays={unusedForDays}
+              onUnusedForDaysChange={setUnusedForDays}
               sort={sort}
               onSortChange={setSort}
               onOpen={openPromptDetail}
@@ -1270,6 +1296,8 @@ export default function App({ storage = defaultStorage }: AppProps) {
                 setQuery('');
                 setSelectedTags([]);
                 setMinRating(0);
+                setNeverUsed(false);
+                setUnusedForDays(false);
                 setSort('priority');
                 setCollectionFilter({ kind: 'all' });
               }}

@@ -12,6 +12,10 @@ interface PromptSearchProps {
   onToggleTag: (tag: string) => void;
   minRating: number;
   onMinRatingChange: (rating: number) => void;
+  neverUsed: boolean;
+  onNeverUsedChange: (neverUsed: boolean) => void;
+  unusedForDays: boolean;
+  onUnusedForDaysChange: (unusedForDays: boolean) => void;
   sort: SortOption;
   onSortChange: (sort: SortOption) => void;
 }
@@ -24,6 +28,10 @@ export function PromptSearch({
   onToggleTag,
   minRating,
   onMinRatingChange,
+  neverUsed,
+  onNeverUsedChange,
+  unusedForDays,
+  onUnusedForDaysChange,
   sort,
   onSortChange,
 }: PromptSearchProps) {
@@ -107,6 +115,23 @@ export function PromptSearch({
             {rating === 0 ? 'Toutes' : `${rating}+`}
           </button>
         ))}
+        <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Usage</span>
+        <button
+          type="button"
+          aria-pressed={neverUsed}
+          onClick={() => onNeverUsedChange(!neverUsed)}
+          className="filter-chip"
+        >
+          Jamais utilisés
+        </button>
+        <button
+          type="button"
+          aria-pressed={unusedForDays}
+          onClick={() => onUnusedForDaysChange(!unusedForDays)}
+          className="filter-chip"
+        >
+          Non utilisés depuis 30 jours
+        </button>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <label

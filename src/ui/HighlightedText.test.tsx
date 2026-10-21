@@ -34,4 +34,18 @@ describe('HighlightedText', () => {
     expect(container.querySelector('mark')).not.toBeInTheDocument();
     expect(container).toHaveTextContent('Analyse');
   });
+
+  it('highlights the characters of an approximate match', () => {
+    const { container } = render(<HighlightedText text="Relance client" query="rlc" />);
+
+    expect(container.querySelectorAll('mark').length).toBeGreaterThan(0);
+    expect(container).toHaveTextContent('Relance client');
+    expect(screen.getByText('R', { selector: 'mark' })).toBeVisible();
+  });
+
+  it('keeps the plain text for an approximate query that does not match', () => {
+    const { container } = render(<HighlightedText text="Relance client" query="xyz" />);
+
+    expect(container.querySelector('mark')).not.toBeInTheDocument();
+  });
 });

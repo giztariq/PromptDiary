@@ -422,6 +422,46 @@ describe('Prompt Diary prompt library', () => {
     confirm.mockRestore();
   });
 
+  it('filters unused prompts and finds a prompt with an approximate query', async () => {
+    const user = userEvent.setup();
+    const usedPrompt: Prompt = {
+      id: 'used',
+      title: 'Relance client',
+      body: 'Prépare une relance commerciale.',
+      tags: [],
+      model: '',
+      context: '',
+      rating: 4,
+      favorite: false,
+      copyCount: 2,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+      lastUsedAt: '2026-10-20T12:00:00.000Z',
+    };
+    const unusedPrompt: Prompt = {
+      ...usedPrompt,
+      id: 'unused',
+      title: 'Plan de seminar',
+      body: 'Construis un plan de séminaire.',
+      copyCount: 0,
+      lastUsedAt: undefined,
+    };
+
+    render(<App storage={createMemoryAdapter([usedPrompt, unusedPrompt])} />);
+    await screen.findByRole('heading', { name: 'Relance client' });
+
+    await user.click(screen.getByRole('button', { name: 'Jamais utilisés' }));
+    expect(screen.getByRole('heading', { name: 'Plan de seminar' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Relance client' })).not.toBeInTheDocument();
+    expect(screen.getByText('1 résultat')).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Jamais utilisés' }));
+    await user.type(screen.getByRole('searchbox', { name: 'Rechercher dans les prompts' }), 'rlc');
+
+    expect(screen.getByRole('heading', { name: 'Relance client' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Plan de seminar' })).not.toBeInTheDocument();
+  });
+
   it('toggles a favorite and keeps favorites before other prompts', async () => {
     const user = userEvent.setup();
     const firstPrompt: Prompt = {
