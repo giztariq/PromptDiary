@@ -127,12 +127,19 @@ Consultant, formateur ou freelance qui utilise l'IA tous les jours et veut capit
 - Le focus est piégé dans la modale et la ligne active est annoncée par `aria-activedescendant`.
 
 ### US14 — Collections
-
 - Un prompt appartient à zéro ou une collection ; la liste des collections est dérivée de la bibliothèque (valeurs uniques, ordre alphabétique) avec un compteur.
 - Barre de navigation (colonne sur desktop, chips horizontales sur mobile) : Tous, Favoris, Sans collection, puis une entrée par collection.
 - L'éditeur propose un sélecteur de collection avec création en ligne ; la carte et le détail affichent la collection.
 - Renommer une collection met à jour tous les prompts concernés ; supprimer une collection détache les prompts sans les supprimer.
 - L'export JSON inclut la collection et l'import la conserve.
+
+### US15 — Détection de doublons
+
+- La similarité est calculée hors ligne par indice de Jaccard sur les jetons normalisés (titre + corps, sans accents ni mots vides).
+- Un prompt est signalé à partir de 55 % de similarité, avec les trois meilleurs correspondants.
+- L'éditeur affiche un bandeau non bloquant « Similaire à « … » (78 %) — Voir · Enregistrer quand même ».
+- Les prompts trop courts ne sont jamais signalés à tort.
+- L'import de la bibliothèque d'exemples ignore un exemple déjà présent ou quasi identique.
 
 ## 5. Modèle de données
 

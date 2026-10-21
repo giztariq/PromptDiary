@@ -13,6 +13,7 @@ import {
 import { recordUsage, toggleFavorite } from '../domain/promptActions';
 import { exportPrompts, mergePromptLibrary, parsePromptExport } from '../domain/importExport';
 import { importExamples } from '../domain/importExample';
+import { findSimilarPrompts } from '../domain/similarity';
 import { searchPrompts } from '../domain/search';
 import { type SortOption } from '../domain/sort';
 import { rankTags } from '../domain/tags';
@@ -285,6 +286,7 @@ interface PromptEditorProps {
   saving: boolean;
   isEditing: boolean;
   collections: CollectionCount[];
+  prompts: Prompt[];
   onChange: (field: keyof PromptDraft, value: string | number) => void;
   onCancel: () => void;
   onSubmit: () => void;
@@ -300,6 +302,7 @@ function PromptEditor({
   saving,
   isEditing,
   collections,
+  prompts,
   onChange,
   onCancel,
   onSubmit,
@@ -310,6 +313,13 @@ function PromptEditor({
   const variables = parseVariables(draft.body);
   const [undoBody, setUndoBody] = useState<string | null>(null);
   const [newCollection, setNewCollection] = useState<string | null>(null);
+  const [similarPreviewId, setSimilarPreviewId] = useState<string | null>(null);
+
+  const similarPrompts = useMemo(
+    () => findSimilarPrompts({ title: draft.title, body: draft.body }, prompts),
+    [draft.body, draft.title, prompts],
+  );
+  const similarPrompt = similarPrompts[0];
 
   const collectionOptions = useMemo(() => {
     const names = new Set(collections.map((collection) => collection.name));
@@ -549,6 +559,36 @@ function PromptEditor({
               )}
             </div>
           </div>
+
+          {similarPrompt && (
+            <div className="rounded-control border border-accent-soft bg-accent-soft p-4">
+              <p className="text-sm font-semibold text-accent-dark">
+                Similaire à « {similarPrompt.prompt.title} » ({similarPrompt.percentage} %)
+              </p>
+              {similarPreviewId === similarPrompt.prompt.id && (
+                <p className="mt-2 font-mono text-xs leading-5 text-ink">
+                  {similarPrompt.prompt.body.slice(0, 180)}
+                  {similarPrompt.prompt.body.length > 180 ? '…' : ''}
+                </p>
+              )}
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSimilarPreviewId((current) =>
+                      current === similarPrompt.prompt.id ? null : similarPrompt.prompt.id,
+                    )
+                  }
+                  className="button-secondary text-xs"
+                >
+                  Voir
+                </button>
+                <button type="button" onClick={onSubmit} className="button-secondary text-xs">
+                  Enregistrer quand même
+                </button>
+              </div>
+            </div>
+          )}
 
           {saveError && (
             <p role="alert" className="error-message p-3 text-sm">
@@ -1363,6 +1403,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
               saving={saving}
               isEditing={Boolean(editingPromptId)}
               collections={collections}
+              prompts={prompts}
               onChange={updateDraft}
               onCancel={() => requestView('library')}
               onSubmit={() => void savePrompt()}

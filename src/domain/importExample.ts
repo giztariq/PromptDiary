@@ -1,6 +1,9 @@
 import { isRating } from './validation';
+import { similarityScore } from './similarity';
 import type { Example } from '../data/examples';
 import type { Prompt, Rating } from './types';
+
+const EXAMPLE_DUPLICATE_THRESHOLD = 0.8;
 
 function toPrompt(example: Example, timestamp: string): Prompt {
   if (!isRating(example.note)) {
@@ -28,20 +31,24 @@ export function importExamples(
   examples: Example[],
   existants: Prompt[],
 ): { ajoutes: Prompt[]; ignores: number } {
-  const titles = new Set(existants.map((prompt) => prompt.title));
-  const bodies = new Set(existants.map((prompt) => prompt.body));
   const ajoutes: Prompt[] = [];
   const timestamp = new Date().toISOString();
 
+  const isDuplicate = (candidate: { title: string; body: string }) =>
+    [...existants, ...ajoutes].some(
+      (prompt) =>
+        prompt.title === candidate.title ||
+        prompt.body === candidate.body ||
+        similarityScore(`${candidate.title} ${candidate.body}`, `${prompt.title} ${prompt.body}`) >=
+          EXAMPLE_DUPLICATE_THRESHOLD,
+    );
+
   for (const example of examples) {
-    if (titles.has(example.titre) || bodies.has(example.corps)) {
+    if (isDuplicate({ title: example.titre, body: example.corps })) {
       continue;
     }
 
-    const prompt = toPrompt(example, timestamp);
-    titles.add(prompt.title);
-    bodies.add(prompt.body);
-    ajoutes.push(prompt);
+    ajoutes.push(toPrompt(example, timestamp));
   }
 
   return { ajoutes, ignores: examples.length - ajoutes.length };

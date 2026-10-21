@@ -462,6 +462,39 @@ describe('Prompt Diary prompt library', () => {
     expect(screen.queryByRole('heading', { name: 'Plan de seminar' })).not.toBeInTheDocument();
   });
 
+  it('warns about a similar prompt before saving', async () => {
+    const user = userEvent.setup();
+    const existing: Prompt = {
+      id: 'relance',
+      title: 'Relance client commercial',
+      body: 'Rédige une relance professionnelle pour un client qui n’a pas répondu depuis trois semaines.',
+      tags: [],
+      model: '',
+      context: '',
+      rating: 4,
+      favorite: false,
+      copyCount: 0,
+      createdAt: '2026-10-19T12:00:00.000Z',
+      updatedAt: '2026-10-19T12:00:00.000Z',
+    };
+
+    render(<App storage={createMemoryAdapter([existing])} />);
+    await screen.findByRole('heading', { name: 'Relance client commercial' });
+
+    await user.click(screen.getByRole('button', { name: 'Nouveau prompt' }));
+    await user.type(screen.getByLabelText('Titre'), 'Relance client commerciale');
+    await user.type(
+      screen.getByLabelText('Corps du prompt'),
+      'Rédige une relance professionnelle pour un client qui n’a pas répondu depuis trois semaines.',
+    );
+
+    expect(await screen.findByText(/Similaire à « Relance client commercial »/)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Enregistrer quand même' })).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Voir' }));
+    expect(screen.getAllByText(/Rédige une relance professionnelle/).length).toBeGreaterThan(1);
+  });
+
   it('toggles a favorite and keeps favorites before other prompts', async () => {
     const user = userEvent.setup();
     const firstPrompt: Prompt = {

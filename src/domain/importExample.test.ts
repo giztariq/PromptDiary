@@ -81,4 +81,21 @@ describe('importExamples', () => {
 
     expect(secondImport).toEqual({ ajoutes: [], ignores: 2 });
   });
+
+  it('ignore un exemple proche d’un prompt existant', () => {
+    const exemple = EXAMPLES[6];
+    const proche = createExisting({
+      title: `${exemple.titre} (variante)`,
+      body: `${exemple.corps} Reformulé pour un autre contexte.`,
+    });
+
+    expect(importExamples([exemple], [proche])).toEqual({ ajoutes: [], ignores: 1 });
+  });
+
+  it('importe tous les exemples de la bibliothèque', () => {
+    const resultat = importExamples(EXAMPLES, []);
+
+    expect(resultat.ajoutes).toHaveLength(EXAMPLES.length);
+    expect(resultat.ignores).toBe(0);
+  });
 });
