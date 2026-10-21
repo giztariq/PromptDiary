@@ -1121,7 +1121,10 @@ export default function App({ storage = defaultStorage }: AppProps) {
         <p className="sr-only">Tout est local, rien ne part sur un serveur.</p>
       ) : (
         <footer className="mx-auto max-w-[1024px] border-t border-border px-6 pt-5 text-center text-sm text-muted sm:px-0">
-          Tout est local, rien ne part sur un serveur.
+          <p className="font-display text-base font-semibold text-ink">
+            Vos prompts deviennent des outils.
+          </p>
+          <p className="mt-1">Tout est local, rien ne part sur un serveur.</p>
         </footer>
       )}
       <Toast key={toastNonce} message={toast} />

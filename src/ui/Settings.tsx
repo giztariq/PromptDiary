@@ -130,7 +130,7 @@ export function Settings({ onBack, onExport, onImport, onClearAll }: SettingsPro
         <h3 id="about-heading" className="font-semibold text-ink">
           À propos
         </h3>
-        <p className="mt-2 text-sm leading-6 text-muted">Version 0.1.0</p>
+        <p className="mt-2 text-sm leading-6 text-muted">Version 2.0.0</p>
         <p className="mt-1 text-sm leading-6 text-muted">
           Prompt Diary est local-first : vos prompts restent dans votre navigateur, sans compte ni
           serveur.

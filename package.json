@@ -1,7 +1,7 @@
 {
   "name": "prompt-diary",
   "private": true,
-  "version": "0.1.0",
+  "version": "2.0.0",
   "description": "Journal local-first pour sauvegarder, noter et réutiliser ses meilleurs prompts.",
   "license": "MIT",
   "author": "C. Tariq",
