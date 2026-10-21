@@ -294,6 +294,18 @@ describe('Prompt Diary prompt library', () => {
     ]);
   });
 
+  it('lists the keyboard shortcuts in the settings screen', async () => {
+    const user = userEvent.setup();
+    render(<App storage={createMemoryAdapter()} />);
+
+    await screen.findByText('Aucun prompt enregistré');
+    await user.click(screen.getByRole('button', { name: 'Réglages' }));
+
+    expect(await screen.findByRole('heading', { name: 'Raccourcis clavier' })).toBeVisible();
+    expect(screen.getByText('Ouvrir la palette de commandes')).toBeVisible();
+    expect(screen.getByText('Ctrl + K')).toBeVisible();
+  });
+
   it('toggles a favorite and keeps favorites before other prompts', async () => {
     const user = userEvent.setup();
     const firstPrompt: Prompt = {

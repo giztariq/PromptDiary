@@ -94,6 +94,7 @@ Consultant, formateur ou freelance qui utilise l'IA tous les jours et veut capit
 - Les états chargement, vide et erreur sont explicites ; l'erreur de stockage propose de réessayer ou de réinitialiser les données locales.
 - Une erreur de rendu inattendue affiche un écran de secours avec rechargement, sans toucher aux données locales.
 - Les raccourcis sont désactivés quand une modale est ouverte.
+- Un panneau de raccourcis clavier est disponible dans les réglages.
 
 ### US11 — Local-first et hors ligne
 

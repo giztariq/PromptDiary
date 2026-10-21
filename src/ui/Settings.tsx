@@ -5,6 +5,15 @@ interface SettingsProps {
   onClearAll?: () => void;
 }
 
+const keyboardShortcuts = [
+  { keys: 'N', label: 'Créer un prompt' },
+  { keys: '/', label: 'Rechercher dans la bibliothèque' },
+  { keys: 'Ctrl + K', label: 'Ouvrir la palette de commandes' },
+  { keys: '↑ ↓', label: 'Naviguer dans la palette de commandes' },
+  { keys: 'Entrée', label: 'Valider la sélection courante' },
+  { keys: 'Échap', label: 'Fermer la fenêtre ou l’écran courant' },
+];
+
 export function Settings({ onBack, onExport, onImport, onClearAll }: SettingsProps) {
   function handleClearAll() {
     if (
@@ -88,6 +97,30 @@ export function Settings({ onBack, onExport, onImport, onClearAll }: SettingsPro
             Effacer tout
           </button>
         </div>
+      </section>
+
+      <section aria-labelledby="shortcuts-heading" className="space-y-4">
+        <div>
+          <h3 id="shortcuts-heading" className="text-lg font-semibold text-ink">
+            Raccourcis clavier
+          </h3>
+          <p className="mt-1 text-sm leading-6 text-muted">
+            Le clavier va plus vite que la souris. Les raccourcis se désactivent pendant la saisie.
+          </p>
+        </div>
+        <dl className="grid gap-3 sm:grid-cols-2">
+          {keyboardShortcuts.map((shortcut) => (
+            <div
+              key={shortcut.keys}
+              className="flex items-center justify-between gap-3 rounded-control border border-border bg-surface-2 px-4 py-3"
+            >
+              <dt className="text-sm text-ink">{shortcut.label}</dt>
+              <dd>
+                <kbd className="shortcut-key">{shortcut.keys}</kbd>
+              </dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       <section

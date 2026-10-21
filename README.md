@@ -14,6 +14,7 @@ Journal local-first de prompts : sauvegardez ce qui fonctionne, notez-le, retrou
 - **Coach qualité** pendant la rédaction et badge « À préciser » sur les prompts trop vagues.
 - **Recherche instantanée** insensible à la casse et aux accents, sur le titre, le corps, les tags, le modèle et le contexte.
 - **Palette de commandes** `Ctrl/Cmd + K` pour créer, ouvrir un prompt ou rejoindre une vue, avec navigation aux flèches.
+- **Raccourcis clavier** listés dans **Réglages** : `N`, `/`, `Ctrl/Cmd + K`, `↑ ↓`, `Entrée`, `Échap`.
 - **Garde-fou brouillon** : confirmation avant de quitter un prompt modifié, y compris à la fermeture de l'onglet.
 - **Filtres** par tags, note minimale et favoris, avec tri au choix (priorité, nouveautés, plus utilisés, mieux notés, titre A → Z). Les tags sont classés par usage et la liste se replie au-delà de 12 tags.
 - **Historique d'usage** : 10 dernières utilisations conservées, 5 affichées dans le détail, compteur de copies, dates relatives (« il y a 3 h ») avec la date exacte en infobulle.
