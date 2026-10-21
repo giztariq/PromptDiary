@@ -18,6 +18,7 @@ Journal local-first de prompts : sauvegardez ce qui fonctionne, notez-le, retrou
 - **Garde-fou brouillon** : confirmation avant de quitter un prompt modifié, y compris à la fermeture de l'onglet.
 - **Filtres** par tags, note minimale, favoris, « jamais utilisés » et « non utilisés depuis 30 jours », avec tri au choix (priorité, nouveautés, plus utilisés, mieux notés, titre A → Z). Les tags sont classés par usage et la liste se replie au-delà de 12 tags.
 - **Détection de doublons** : avant d'enregistrer, l'éditeur signale les prompts presque identiques et propose de les revoir.
+- **Historique de versions** : les 5 dernières versions du titre et du corps sont conservées, restaurables en un clic.
 - **Historique d'usage** : 10 dernières utilisations conservées, 5 affichées dans le détail, compteur de copies, dates relatives (« il y a 3 h ») avec la date exacte en infobulle.
 - **Collections** : classez vos prompts par client, projet ou contexte, renommez ou détachez une collection sans jamais perdre un prompt.
 - **Statistiques locales** : prompts, copies, favoris, note moyenne, prompts les plus utilisés, tags les plus utilisés, répartition des notes, prompts jamais copiés.

@@ -14,6 +14,7 @@ import { recordUsage, toggleFavorite } from '../domain/promptActions';
 import { exportPrompts, mergePromptLibrary, parsePromptExport } from '../domain/importExport';
 import { importExamples } from '../domain/importExample';
 import { findSimilarPrompts } from '../domain/similarity';
+import { createVersions, hasContentChanged, restoreVersion } from '../domain/versions';
 import { searchPrompts } from '../domain/search';
 import { type SortOption } from '../domain/sort';
 import { rankTags } from '../domain/tags';
@@ -25,7 +26,7 @@ import {
 import { detectVaguePrompt } from '../domain/vagueDetection';
 import type { PromptPatch } from '../domain/coach';
 import { fillVariables, parseVariables } from '../domain/variables';
-import type { Prompt } from '../domain/types';
+import type { Prompt, PromptVersion } from '../domain/types';
 import { EXAMPLES, type Example } from '../data/examples';
 import { createIndexedDbAdapter } from '../storage/indexedDbAdapter';
 import { variableValuesKey, type StorageAdapter } from '../storage/storageAdapter';
@@ -916,6 +917,12 @@ export default function App({ storage = defaultStorage }: AppProps) {
       ? prompts.find((currentPrompt) => currentPrompt.id === editingPromptId)
       : undefined;
     const prompt = createPromptFromDraft(draft, existing?.id ?? createId(), timestamp);
+    const versions = existing
+      ? hasContentChanged(existing, prompt)
+        ? createVersions(existing, timestamp)
+        : existing.versions
+      : undefined;
+
     const savedPrompt = existing
       ? {
           ...prompt,
@@ -924,6 +931,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
           createdAt: existing.createdAt,
           lastUsedAt: existing.lastUsedAt,
           usageLog: existing.usageLog,
+          ...(versions ? { versions } : {}),
         }
       : prompt;
     setSaving(true);
@@ -944,6 +952,23 @@ export default function App({ storage = defaultStorage }: AppProps) {
       showToast('Impossible d’enregistrer le prompt.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function restorePromptVersion(prompt: Prompt, version: PromptVersion) {
+    const timestamp = new Date().toISOString();
+    const restored = restoreVersion(prompt, version, timestamp);
+
+    try {
+      await storage.save(restored);
+      setPrompts((currentPrompts) =>
+        currentPrompts.map((currentPrompt) =>
+          currentPrompt.id === restored.id ? restored : currentPrompt,
+        ),
+      );
+      showToast('Version restaurée');
+    } catch {
+      showToast('Impossible de restaurer cette version.');
     }
   }
 
@@ -1377,6 +1402,7 @@ export default function App({ storage = defaultStorage }: AppProps) {
               onEdit={() => openEditor(selectedPrompt)}
               onDuplicate={() => void duplicatePrompt(selectedPrompt)}
               onDelete={() => void deletePrompt(selectedPrompt)}
+              onRestoreVersion={(version) => void restorePromptVersion(selectedPrompt, version)}
             />
           )}
           {status === 'ready' && view === 'detail' && !selectedPrompt && (

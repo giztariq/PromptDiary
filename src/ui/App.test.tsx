@@ -495,6 +495,43 @@ describe('Prompt Diary prompt library', () => {
     expect(screen.getAllByText(/Rédige une relance professionnelle/).length).toBeGreaterThan(1);
   });
 
+  it('keeps the previous versions and restores them from the detail', async () => {
+    const user = userEvent.setup();
+    const adapter = createMemoryAdapter();
+    render(<App storage={adapter} />);
+
+    await screen.findByText('Aucun prompt enregistré');
+    await user.click(screen.getByRole('button', { name: 'Nouveau prompt' }));
+    await user.type(screen.getByLabelText('Titre'), 'Première version');
+    await user.type(
+      screen.getByLabelText('Corps du prompt'),
+      'Un corps de départ suffisamment long pour compter comme un prompt.',
+    );
+    await user.selectOptions(screen.getByLabelText('Note'), '4');
+    await user.click(screen.getByRole('button', { name: 'Enregistrer le prompt' }));
+
+    await screen.findByRole('heading', { name: 'Première version' });
+    await user.click(screen.getByRole('button', { name: 'Ouvrir Première version' }));
+    await user.click(screen.getByRole('button', { name: 'Éditer' }));
+    await user.clear(screen.getByLabelText('Titre'));
+    await user.type(screen.getByLabelText('Titre'), 'Deuxième version');
+    await user.click(screen.getByRole('button', { name: 'Enregistrer le prompt' }));
+
+    await screen.findByRole('heading', { name: 'Deuxième version' });
+    await user.click(screen.getByRole('button', { name: 'Ouvrir Deuxième version' }));
+
+    expect(screen.getByText('Historique des versions (1)')).toBeVisible();
+    await user.click(screen.getByText('Historique des versions (1)'));
+    expect(screen.getByText('Première version')).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Restaurer' }));
+
+    expect(await screen.findByRole('heading', { name: 'Première version' })).toBeVisible();
+    const stored = await adapter.list();
+    expect(stored[0].title).toBe('Première version');
+    expect(stored[0].versions?.[0].title).toBe('Deuxième version');
+  });
+
   it('toggles a favorite and keeps favorites before other prompts', async () => {
     const user = userEvent.setup();
     const firstPrompt: Prompt = {

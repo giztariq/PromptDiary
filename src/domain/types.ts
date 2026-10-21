@@ -1,5 +1,11 @@
 export type Rating = 1 | 2 | 3 | 4 | 5;
 
+export interface PromptVersion {
+  title: string;
+  body: string;
+  savedAt: string;
+}
+
 export interface Prompt {
   id: string;
   title: string;
@@ -15,4 +21,5 @@ export interface Prompt {
   collection?: string;
   lastUsedAt?: string;
   usageLog?: string[];
+  versions?: PromptVersion[];
 }

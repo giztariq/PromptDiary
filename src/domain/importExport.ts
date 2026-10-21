@@ -40,6 +40,15 @@ function isPrompt(value: unknown): value is Prompt {
     typeof value.createdAt === 'string' &&
     typeof value.updatedAt === 'string' &&
     (value.collection === undefined || typeof value.collection === 'string') &&
+    (value.versions === undefined ||
+      (Array.isArray(value.versions) &&
+        value.versions.every(
+          (version) =>
+            isRecord(version) &&
+            typeof version.title === 'string' &&
+            typeof version.body === 'string' &&
+            typeof version.savedAt === 'string',
+        ))) &&
     (value.lastUsedAt === undefined || typeof value.lastUsedAt === 'string') &&
     (value.usageLog === undefined ||
       (Array.isArray(value.usageLog) &&

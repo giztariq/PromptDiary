@@ -1,4 +1,4 @@
-import type { Prompt } from '../domain/types';
+import type { Prompt, PromptVersion } from '../domain/types';
 import { formatRelativeDate } from '../domain/format';
 import { parseVariables } from '../domain/variables';
 import { FavoriteButton } from './FavoriteButton';
@@ -12,6 +12,7 @@ interface PromptDetailProps {
   onEdit?: () => void;
   onDuplicate?: () => void;
   onDelete?: () => void;
+  onRestoreVersion?: (version: PromptVersion) => void;
 }
 
 function formatDate(value: string, withTime = false) {
@@ -36,6 +37,7 @@ export function PromptDetail({
   onEdit,
   onDuplicate,
   onDelete,
+  onRestoreVersion,
 }: PromptDetailProps) {
   const variables = parseVariables(prompt.body);
   const handleDelete = () => {
@@ -189,6 +191,42 @@ export function PromptDetail({
                 </li>
               ))}
           </ol>
+        </details>
+      )}
+
+      {prompt.versions && prompt.versions.length > 0 && (
+        <details className="mt-4 rounded-control border border-border p-4 text-sm">
+          <summary className="cursor-pointer font-medium text-ink">
+            Historique des versions ({prompt.versions.length})
+          </summary>
+          <ul className="mt-3 grid gap-3">
+            {prompt.versions.map((version, index) => (
+              <li
+                key={`${version.savedAt}-${index}`}
+                className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-3 last:border-b-0 last:pb-0"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-ink">{version.title}</p>
+                  <p className="mt-1 font-mono text-xs leading-5 text-muted">
+                    {version.body.slice(0, 120)}
+                    {version.body.length > 120 ? '…' : ''}
+                  </p>
+                  <p className="mt-1 text-xs text-muted">
+                    {formatRelativeDate(version.savedAt)} · {formatDate(version.savedAt, true)}
+                  </p>
+                </div>
+                {onRestoreVersion && (
+                  <button
+                    type="button"
+                    onClick={() => onRestoreVersion(version)}
+                    className="button-secondary shrink-0 text-xs"
+                  >
+                    Restaurer
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
         </details>
       )}
 

@@ -141,6 +141,13 @@ Consultant, formateur ou freelance qui utilise l'IA tous les jours et veut capit
 - Les prompts trop courts ne sont jamais signalés à tort.
 - L'import de la bibliothèque d'exemples ignore un exemple déjà présent ou quasi identique.
 
+### US16 — Historique de versions
+
+- Les cinq dernières versions du titre et du corps sont conservées à chaque modification.
+- Un enregistrement sans changement de titre ni de corps ne crée aucune version.
+- Le détail affiche un historique repliable : date, extrait et bouton « Restaurer ».
+- Restaurer une version repousse d'abord l'état courant dans l'historique et confirme par un toast.
+
 ## 5. Modèle de données
 
 ```ts
